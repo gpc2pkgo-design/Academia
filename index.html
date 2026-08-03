@@ -2,643 +2,1245 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Calistenia PRO V9 - Volume Acumulado</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calistenia PRO V7 - RPG & Saves Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
         :root {
-            --accent: #00d2d3;
-            --accent-glow: rgba(0, 210, 211, 0.4);
-            --danger: #ff6b6b;
-            --xp-color: #feca57;
+            /* Tema Claro Padrão */
+            --primary: #111418;
+            --secondary: #485460;
+            --accent: #0fb9b1; 
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #1e272e;
+            --text-light: #747d8c;
+            --danger: #ff4757;
+            --border: #dcdde1;
             
-            /* Glassmorphism Escuro (Padrão) */
-            --bg-gradient: linear-gradient(-45deg, #0f172a, #1e1b4b, #171717, #020617);
-            --glass-bg: rgba(30, 41, 59, 0.6);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-main: #f8fafc;
-            --text-light: #94a3b8;
-            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --color-abdominais: #fa8231;
+            --color-mergulhos: #8e44ad;
+            --color-academia: #2980b9;
+            --color-pr: #e67e22;
+            --color-overpower-1: #ff416c;
+            --color-overpower-2: #ff4b2b;
+            --xp-color: #f1c40f;
         }
 
-        [data-theme="light"] {
-            --bg-gradient: linear-gradient(-45deg, #e2e8f0, #f8fafc, #e0e7ff, #f1f5f9);
-            --glass-bg: rgba(255, 255, 255, 0.7);
-            --glass-border: rgba(0, 0, 0, 0.1);
-            --text-main: #0f172a;
-            --text-light: #64748b;
-            --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        /* TEMA ESCURO */
+        [data-theme="dark"] {
+            --primary: #f5f6fa;
+            --secondary: #a4b0be;
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #f5f6fa;
+            --text-light: #a4b0be;
+            --border: #2f3640;
         }
 
-        * { box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
 
         body {
-            margin: 0; padding: 0; padding-top: 80px; padding-bottom: 90px;
-            background: var(--bg-gradient); background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite; color: var(--text-main); min-height: 100vh;
+            margin: 0; padding: 0;
+            background: linear-gradient(-45deg, #f0f2f5, #e4e7eb, #f0f2f5, #dbe0e6);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            overflow-x: hidden; transition: background 0.3s;
+            padding-bottom: 90px;
         }
 
-        @keyframes gradientBG { 0% {background-position: 0% 50%} 50% {background-position: 100% 50%} 100% {background-position: 0% 50%} }
+        [data-theme="dark"] body {
+            background: linear-gradient(-45deg, #121212, #1a1a24, #121212, #0d0d12);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
 
-        /* ======= HEADER & XP BAR ======= */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* ======= MENU LATERAL ======= */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
+            z-index: 100; display: none; opacity: 0; transition: 0.3s;
+        }
+        .overlay.active { display: block; opacity: 1; }
+
+        .sidebar {
+            position: fixed; top: 0; left: -280px; width: 280px; height: 100vh;
+            background-color: #111418; color: white;
+            z-index: 101; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; overflow-y: auto;
+        }
+        .sidebar.open { left: 0; }
+        .sidebar-header { padding: 25px 20px; font-size: 1.4rem; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .sidebar-menu { display: flex; flex-direction: column; padding: 15px 0; flex-grow: 1; }
+        .sidebar-menu button { background: none; border: none; color: #a4b0be; padding: 14px 25px; text-align: left; font-size: 1rem; font-weight: 500; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 12px;}
+        .sidebar-menu button:hover { color: white; background: rgba(255,255,255,0.05); }
+        .sidebar-menu button.active-tab { background: rgba(15, 185, 177, 0.15); color: var(--accent); border-left: 4px solid var(--accent); font-weight: 600; }
+        .divider { height: 1px; background: rgba(255,255,255,0.1); margin: 15px 20px; }
+
+        /* ======= BARRA FIXA SUPERIOR RPG ======= */
+        .rpg-top-bar {
+            background: var(--card-bg);
+            padding: 10px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            position: sticky; top: 0; z-index: 95;
+            border-bottom: 1px solid var(--border);
+        }
+        .rpg-level-badge {
+            background: linear-gradient(135deg, #f1c40f, #e67e22);
+            color: #fff; font-weight: 800; padding: 6px 14px;
+            border-radius: 20px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;
+            box-shadow: 0 2px 8px rgba(241, 196, 15, 0.4);
+        }
+        .rpg-xp-container { flex-grow: 1; max-width: 450px; }
+        .rpg-xp-text { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700; color: var(--text-light); margin-bottom: 4px; }
+        .rpg-xp-bar-bg { background: var(--border); height: 8px; border-radius: 10px; overflow: hidden; }
+        .rpg-xp-bar-fill { background: linear-gradient(90deg, #f1c40f, #2ecc71); height: 100%; width: 0%; transition: width 0.5s ease; }
+
+        /* ======= CABEÇALHO PRINCIPAL ======= */
         header {
-            position: fixed; top: 0; width: 100%; z-index: 50;
-            background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--glass-border); padding: 15px 20px;
-            display: flex; flex-direction: column; gap: 10px;
+            background-color: var(--card-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05); transition: background 0.3s;
         }
-        .header-top { display: flex; justify-content: space-between; align-items: center; }
-        .level-badge { background: var(--accent); color: #000; padding: 4px 10px; border-radius: 8px; font-weight: 900; font-size: 0.9rem; box-shadow: 0 0 10px var(--accent-glow);}
-        
-        .xp-container { width: 100%; display: flex; align-items: center; gap: 10px; }
-        .xp-bar-bg { flex: 1; height: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; border: 1px solid var(--glass-border);}
-        .xp-fill { height: 100%; background: var(--xp-color); width: 0%; transition: width 1s ease; box-shadow: 0 0 10px var(--xp-color); }
-        .xp-text { font-size: 0.8rem; font-weight: 700; color: var(--xp-color); min-width: 60px; text-align: right;}
-        .theme-btn { background: none; border: none; color: var(--text-main); font-size: 1.2rem; cursor: pointer; }
+        .header-left { display: flex; align-items: center; gap: 15px;}
+        .menu-btn { font-size: 1.6rem; cursor: pointer; color: var(--primary); user-select: none; transition: 0.2s; display: flex; align-items: center; }
+        .menu-btn:hover { transform: scale(1.1); }
+        header h1 { margin: 0; font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .theme-toggle { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-main); }
 
-        /* ======= TIMER FLUTUANTE ======= */
-        .rest-timer {
-            position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 99;
-            background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--accent);
-            padding: 8px 20px; border-radius: 30px; font-weight: 900; font-size: 1.1rem; color: var(--accent);
-            box-shadow: 0 0 15px var(--accent-glow); display: none; align-items: center; gap: 8px;
-        }
-        .rest-timer.active { display: flex; animation: slideDown 0.3s ease; }
-        @keyframes slideDown { from { top: 60px; opacity: 0; } to { top: 90px; opacity: 1; } }
-
-        /* ======= LAYOUT & CARDS ======= */
-        .container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .container { max-width: 900px; margin: 20px auto; padding: 0 20px; }
+        .tab-content { display: none; animation: fadeIn 0.4s ease; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .glass-card {
-            background: var(--glass-bg); backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px;
-            box-shadow: var(--card-shadow); margin-bottom: 25px;
-        }
-        h2, h3 { margin-top: 0; }
+        /* ======= CARDS & COMPONENTES ======= */
+        .card { background: var(--card-bg); border-radius: 20px; padding: 22px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-bottom: 25px; transition: 0.3s;}
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+        .card-header h2 { margin: 0; font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
 
-        /* ======= HEATMAP (CONSTÂNCIA) ======= */
-        .heatmap-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 15px; }
-        .heat-square { width: 14px; height: 14px; border-radius: 3px; background: rgba(0,0,0,0.1); border: 1px solid var(--glass-border); }
-        .heat-level-1 { background: rgba(0, 210, 211, 0.3); border-color: transparent;}
-        .heat-level-2 { background: rgba(0, 210, 211, 0.6); border-color: transparent;}
-        .heat-level-3 { background: rgba(0, 210, 211, 1); border-color: transparent; box-shadow: 0 0 5px var(--accent-glow);}
-
-        /* ======= BOTÕES GENÉRICOS ======= */
-        .btn-flex { background: linear-gradient(45deg, #feca57, #ff9f43); color: #000; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 5px 15px rgba(254, 202, 87, 0.4); width: 100%; justify-content: center;}
-        .btn-flex:active { transform: scale(0.98); }
+        /* Dash & Gamificação */
+        .gamification-panel { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .streak-box, .badges-box { background: var(--card-bg); padding: 18px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); flex: 1; min-width: 220px; text-align: center;}
+        .streak-number { font-size: 2.5rem; font-weight: 800; color: #ff9f43; margin: 5px 0;}
         
-        .btn-action { background: rgba(0,0,0,0.2); color: var(--text-main); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; cursor: pointer; font-weight: 700; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;}
-        .btn-action:hover { background: rgba(255,255,255,0.05); }
+        .badge-list { display: flex; justify-content: center; gap: 12px; margin-top: 10px; }
+        .badge { font-size: 1.8rem; opacity: 0.25; filter: grayscale(1); transition: 0.3s; }
+        .badge.unlocked { opacity: 1; filter: grayscale(0); transform: scale(1.1); }
 
-        /* ======= LISTAS E BARRAS ======= */
-        .exercise-item { margin-bottom: 25px; }
-        .exercise-info { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 700; font-size: 0.95rem; align-items: center;}
-        .record-tag { background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--glass-border); display: inline-block;}
-        .pr-tag { color: var(--xp-color); margin-left: 8px; font-size: 0.75rem;}
-        .prog-bg { background: rgba(0,0,0,0.2); height: 12px; border-radius: 10px; overflow: hidden; border: 1px inset var(--glass-border); }
-        .prog-fill { height: 100%; background: var(--accent); width: 0%; border-radius: 10px; transition: 1s ease; box-shadow: 0 0 10px var(--accent-glow);}
+        /* Missões Diárias RPG */
+        .quests-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .quest-item { background: var(--bg-color); padding: 10px 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; font-weight: 600; }
+        .quest-item.done { opacity: 0.6; text-decoration: line-through; border-left: 4px solid var(--accent); }
 
-        /* ======= BOTTOM NAV & FAB ======= */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%; z-index: 50;
-            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid var(--glass-border); display: flex; justify-content: space-around; padding: 10px 10px 20px 10px;
-        }
-        .nav-item { background: none; border: none; color: var(--text-light); display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-size: 0.7rem; font-weight: 700; flex: 1; transition: 0.3s;}
-        .nav-item i { font-size: 1.8rem; }
-        .nav-item.active { color: var(--accent); transform: translateY(-3px); }
+        /* Heatmap de Constância */
+        .heatmap-grid { display: grid; grid-template-columns: repeat(14, 1fr); gap: 6px; margin-top: 15px; }
+        .heatmap-cell { width: 100%; aspect-ratio: 1; border-radius: 4px; background: var(--border); transition: 0.2s; position: relative; }
+        .heatmap-cell[data-level="1"] { background: rgba(15, 185, 177, 0.3); }
+        .heatmap-cell[data-level="2"] { background: rgba(15, 185, 177, 0.6); }
+        .heatmap-cell[data-level="3"] { background: rgba(15, 185, 177, 0.9); }
+        .heatmap-cell[data-level="4"] { background: #0fb9b1; box-shadow: 0 0 6px #0fb9b1; }
 
-        .fab {
-            position: fixed; bottom: 85px; right: 20px; z-index: 60;
-            width: 60px; height: 60px; border-radius: 30px;
-            background: var(--accent); color: #000; display: flex; justify-content: center; align-items: center;
-            font-size: 2rem; box-shadow: 0 5px 20px var(--accent-glow); border: none; cursor: pointer; transition: 0.2s;
-        }
-        .fab:active { transform: scale(0.9); }
-
-        /* ======= MODAIS ======= */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-            z-index: 100; display: none; justify-content: center; align-items: center; padding: 20px;
-        }
-        .modal-overlay.open { display: flex; animation: fadeIn 0.2s; }
-        .modal-content {
-            background: var(--glass-bg); backdrop-filter: blur(20px); width: 100%; max-width: 400px;
-            border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; box-shadow: var(--card-shadow);
-        }
-
-        /* ESTILO DO CARTÃO FLEX (PRINT) */
+        /* Cartão Flex (Perfil) */
         .flex-card {
-            background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid var(--xp-color);
-            border-radius: 20px; padding: 30px; text-align: center; color: white; position: relative; overflow: hidden;
-            box-shadow: 0 0 30px rgba(254, 202, 87, 0.3); margin-bottom: 20px;
+            background: linear-gradient(135deg, #1e272e, #111418);
+            color: #fff; border-radius: 20px; padding: 25px; position: relative; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
         }
-        .flex-card::before { content:''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(254,202,87,0.1) 0%, transparent 70%); }
-        .flex-level { font-size: 3rem; font-weight: 900; color: var(--xp-color); margin: 10px 0; text-shadow: 0 0 10px rgba(254, 202, 87, 0.5);}
-        .flex-stats { display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;}
-        .flex-stats div { flex: 1; }
-        .flex-val { font-size: 1.5rem; font-weight: 900; display: block; color: var(--accent); }
-        .flex-lbl { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;}
+        .flex-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .flex-card-title { font-size: 1.4rem; font-weight: 800; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+        .flex-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; margin-top: 15px; }
+        .flex-stat-number { font-size: 1.5rem; font-weight: 800; color: var(--xp-color); }
+        .flex-stat-label { font-size: 0.75rem; color: #a4b0be; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Gráfico */
+        .chart-container { background: var(--card-bg); padding: 20px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+
+        .focus-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .focus-card { background: var(--card-bg); border-radius: 15px; padding: 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid var(--accent);}
+        .focus-card.c-abd { border-color: var(--color-abdominais); }
+        .focus-card.c-merg { border-color: var(--color-mergulhos); }
+        .focus-card.c-acad { border-color: var(--color-academia); }
+        .focus-numbers { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
+
+        /* Exercícios & Lista */
+        .exercise-item { margin-bottom: 20px; }
+        .exercise-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; font-size: 0.95rem; align-items: flex-start; }
+        .record-badge { font-size: 0.8rem; background: var(--bg-color); color: var(--text-main); padding: 4px 10px; border-radius: 12px; font-weight: 800;}
+        .pr-tag { font-size: 0.75rem; background: rgba(230, 126, 34, 0.15); color: var(--color-pr); padding: 3px 8px; border-radius: 10px; font-weight: 800; margin-left: 6px;}
         
-        /* Forms */
-        .form-group { display: flex; flex-direction: column; gap: 15px; margin-top: 20px;}
-        select, input { background: rgba(0,0,0,0.2); color: var(--text-main); border: 1px solid var(--glass-border); padding: 15px; border-radius: 12px; font-size: 1rem; font-weight: 600; outline: none; }
-        select:focus, input:focus { border-color: var(--accent); }
-        .row-inputs { display: flex; gap: 10px; }
-        .row-inputs input { flex: 1; }
-        .btn-save { background: var(--accent); color: #000; border: none; padding: 15px; border-radius: 12px; font-weight: 900; font-size: 1.1rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;}
-        .btn-close { background: none; color: var(--text-light); border: none; margin-top: 10px; width: 100%; padding: 10px; font-weight: 700; cursor: pointer;}
+        .progress-bg { background-color: var(--border); border-radius: 20px; height: 12px; width: 100%; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; border-radius: 20px; transition: width 1s, background 0.5s; }
+        
+        .fill-gold { background: linear-gradient(90deg, #fbc531, #e1b12c) !important; box-shadow: 0 0 10px rgba(251, 197, 49, 0.5); }
+        .fill-over { background: linear-gradient(90deg, var(--color-overpower-1), var(--color-overpower-2)) !important; box-shadow: 0 0 15px rgba(255, 75, 43, 0.6); }
+
+        /* Formulários */
+        .form-group { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        .create-group { background: var(--bg-color); padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px dashed var(--border); }
+        
+        select, input { background: var(--card-bg); color: var(--text-main); padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; font-size: 0.95rem; outline: none; }
+        select { flex: 2; min-width: 140px; font-weight: 600;}
+        input[type="number"] { flex: 1; min-width: 80px; }
+        input[type="text"] { flex: 2; min-width: 140px; }
+        
+        button.btn-save { background-color: var(--primary); color: #fff; border: none; cursor: pointer; font-weight: 800; border-radius: 12px; transition: 0.2s; flex: 1; min-width: 110px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;}
+        button.btn-save:hover { filter: brightness(1.2); }
+        
+        .filter-box { display: flex; gap: 10px; align-items: center; margin-bottom: 15px; background: var(--bg-color); padding: 10px; border-radius: 12px; }
+
+        /* Histórico */
+        .historico-lista { display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto; }
+        .registro-item { background: var(--bg-color); padding: 12px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
+        .data-registro { color: var(--text-light); font-size: 0.8rem; font-weight: 500;}
+        .badge-peso { background: var(--primary); color: #fff; padding: 3px 8px; border-radius: 8px; font-size: 0.8rem; margin-left: 6px; }
+        .badge-pr-hist { background: var(--color-pr); color: #fff; padding: 2px 6px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-left: 5px; }
+        .btn-delete { background: rgba(255, 71, 87, 0.1); color: var(--danger); border: none; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 0.9rem; transition: 0.2s; }
+        .btn-delete:hover { background: var(--danger); color: white; transform: scale(1.1); }
+
+        /* ======= CRONÔMETRO INTELIGENTE ======= */
+        .timer-card { text-align: center; background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .timer-display { font-size: 3rem; font-weight: 800; font-family: monospace; color: var(--accent); margin: 10px 0; }
+        .timer-presets { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+        .btn-preset { background: var(--bg-color); border: 1px solid var(--border); color: var(--text-main); padding: 8px 14px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-preset:hover { background: var(--accent); color: #fff; }
+
+        /* ======= SISTEMA DE SAVES (FASE / ROTINAS) ======= */
+        .save-card {
+            background: var(--card-bg); border: 2px solid var(--border); border-radius: 16px; padding: 18px;
+            margin-bottom: 15px; position: relative; transition: 0.3s;
+        }
+        .save-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .save-badge { background: var(--accent); color: white; font-weight: 800; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; position: absolute; top: 15px; right: 15px; }
+
+        /* ======= BOTTOM NAV (MOBILE UX) ======= */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: var(--card-bg); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; padding: 10px 0;
+            z-index: 90; box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+        }
+        .bottom-nav-btn { background: none; border: none; color: var(--text-light); font-size: 0.75rem; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; transition: 0.2s; }
+        .bottom-nav-btn i { font-size: 1.4rem; }
+        .bottom-nav-btn.active-nav { color: var(--accent); font-weight: 700; }
+
+        /* ======= FAB (BOTÃO FLUTUANTE DE REGISTRO RÁPIDO) ======= */
+        .fab-btn {
+            position: fixed; bottom: 75px; right: 20px;
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #00b894);
+            color: white; border: none; font-size: 1.8rem;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 6px 20px rgba(15, 185, 177, 0.4); cursor: pointer;
+            z-index: 92; transition: 0.3s;
+        }
+        .fab-btn:hover { transform: scale(1.1) rotate(90deg); }
+
+        /* MODAL FAB */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 150; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--card-bg); width: 100%; max-width: 450px; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="header-top">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <div class="level-badge" id="lvl-display">LVL 1</div>
-                <h1 style="margin:0; font-size:1.1rem; font-weight:900;">RPG Tracker V9</h1>
-            </div>
-            <button class="theme-btn" onclick="toggleTheme()" id="btn-theme"><i class="ph-fill ph-moon"></i></button>
+    <div class="overlay" id="overlay" onclick="fecharMenu()"></div>
+    
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header"><i class="ph-bold ph-fire"></i> Calistenia PRO</div>
+        <div class="sidebar-menu">
+            <button onclick="mudarAba('inicio')" class="menu-tab active-tab" id="btn-inicio"><i class="ph-bold ph-house"></i> Início / RPG</button>
+            <button onclick="mudarAba('flexoes')" class="menu-tab" id="btn-flexoes"><i class="ph-bold ph-barbell"></i> Flexões</button>
+            <button onclick="mudarAba('abdominais')" class="menu-tab" id="btn-abdominais"><i class="ph-bold ph-lightning"></i> Core</button>
+            <button onclick="mudarAba('mergulhos')" class="menu-tab" id="btn-mergulhos"><i class="ph-bold ph-armchair"></i> Tríceps</button>
+            <button onclick="mudarAba('academia')" class="menu-tab" id="btn-academia"><i class="ph-bold ph-trophy"></i> Academia & PR</button>
+            <button onclick="mudarAba('saves')" class="menu-tab" id="btn-saves"><i class="ph-bold ph-floppy-disk"></i> Saves & Rotinas</button>
+            <button onclick="mudarAba('ferramentas')" class="menu-tab" id="btn-ferramentas"><i class="ph-bold ph-wrench"></i> Backup & Ferramentas</button>
+            <div class="divider"></div>
+            <button onclick="limparTudo()" style="color: #ff4757;"><i class="ph-bold ph-trash"></i> Zerar Atuais</button>
         </div>
-        <div class="xp-container">
-            <div class="xp-bar-bg"><div class="xp-fill" id="xp-bar"></div></div>
-            <div class="xp-text" id="xp-text">0/50 XP</div>
-        </div>
-    </header>
+    </nav>
 
-    <div class="rest-timer" id="rest-timer">
-        <i class="ph-bold ph-timer"></i> <span id="timer-text">01:30</span>
+    <div class="rpg-top-bar">
+        <div class="rpg-level-badge" id="rpg-lvl-badge">
+            <i class="ph-bold ph-crown"></i> Nível <span id="rpg-level-num">1</span>
+        </div>
+        <div class="rpg-xp-container">
+            <div class="rpg-xp-text">
+                <span id="rpg-title">Recruta</span>
+                <span><span id="rpg-current-xp">0</span> / <span id="rpg-next-xp">100</span> XP</span>
+            </div>
+            <div class="rpg-xp-bar-bg">
+                <div class="rpg-xp-bar-fill" id="rpg-xp-fill"></div>
+            </div>
+        </div>
     </div>
+
+    <header>
+        <div class="header-left">
+            <div class="menu-btn" onclick="abrirMenu()"><i class="ph-bold ph-list"></i></div>
+            <h1 id="titulo-pagina">Dashboard</h1>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" id="btn-theme"><i class="ph-bold ph-moon"></i></button>
+    </header>
 
     <div class="container">
         
-        <main id="tab-dash" class="tab-content active">
+        <section id="inicio" class="tab-content active">
             
-            <button class="btn-flex" onclick="abrirModalFlex()" style="margin-bottom: 25px;">
-                <i class="ph-fill ph-instagram-logo"></i> Gerar Cartão de Atleta
-            </button>
-
-            <div class="glass-card">
-                <h3 style="margin:0;"><i class="ph-fill ph-calendar-check" style="color:var(--accent);"></i> Constância (28 Dias)</h3>
-                <div class="heatmap-grid" id="heatmap"></div>
-            </div>
-
-            <div class="glass-card">
-                <h3><i class="ph-fill ph-chart-line-up" style="color:var(--accent);"></i> Fantasma (VS Sem. Passada)</h3>
-                <canvas id="ghostChart" height="180"></canvas>
-            </div>
-        </main>
-
-        <main id="tab-treino" class="tab-content">
-            <div class="glass-card">
-                <h3>🦾 Calistenia (Meta por Série: 50)</h3>
-                <div id="lista-calistenia"></div>
-            </div>
-            <div class="glass-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-                    <h3 style="margin:0;">🏋️ Academia & PR</h3>
-                    <button onclick="addExercicioAcademia()" style="background:var(--glass-border); color:var(--text-main); border:none; padding:5px 12px; border-radius:8px; font-weight:700;">+ Criar</button>
+            <div class="card" style="background: linear-gradient(135deg, var(--card-bg), var(--bg-color));">
+                <div class="card-header">
+                    <h2><i class="ph-bold ph-scroll" style="color:var(--xp-color)"></i> Missões Diárias RPG</h2>
+                    <span class="record-badge" style="background:var(--xp-color); color:#fff;">+ Bônus XP</span>
                 </div>
-                <div id="lista-academia"></div>
+                <div class="quests-list" id="lista-quest-diaria">
+                    </div>
             </div>
-        </main>
 
-        <main id="tab-saves" class="tab-content">
-            <div class="glass-card" style="text-align:center;">
-                <h3><i class="ph-fill ph-shield-check" style="color:var(--accent); font-size:2rem;"></i><br>Segurança de Dados</h3>
-                <p style="color:var(--text-light); font-size:0.9rem;">Proteja seu progresso. Exporte seu save para o WhatsApp ou Bloco de Notas.</p>
-                <div style="display:flex; gap:10px; margin-top:20px;">
-                    <button class="btn-action" onclick="exportarDados()"><i class="ph-bold ph-export"></i> Exportar</button>
-                    <button class="btn-action" onclick="importarDados()"><i class="ph-bold ph-download-simple"></i> Importar</button>
+            <div class="gamification-panel">
+                <div class="streak-box">
+                    <h3 style="margin:0; font-size:0.9rem; color:var(--text-light)">Sequência de Treino</h3>
+                    <div class="streak-number" id="streak-dias">0 🔥</div>
+                    <p style="margin:0; font-size:0.85rem; font-weight:600;">Dias seguidos!</p>
+                </div>
+                <div class="badges-box">
+                    <h3 style="margin:0; font-size:0.9rem; color:var(--text-light)">Conquistas</h3>
+                    <div class="badge-list">
+                        <span class="badge" id="badge-1" title="Iniciante: Fez o 1º Treino">🥉</span>
+                        <span class="badge" id="badge-2" title="Guerreiro: Bateu 50 Reps em uma série">🥈</span>
+                        <span class="badge" id="badge-3" title="Super Saiyan: Passou da Meta (Overpower)">🔥</span>
+                    </div>
                 </div>
             </div>
 
-            <h3 style="margin-left: 10px;">Fases de Treinamento:</h3>
-            <button class="btn-action" onclick="arquivarRotina()" style="margin-bottom: 15px; border-color:var(--accent); color:var(--accent);">
-                <i class="ph-bold ph-plus"></i> Iniciar Nova Fase
-            </button>
-            <div id="lista-saves"></div>
-        </main>
-
-    </div>
-
-    <nav class="bottom-nav">
-        <button class="nav-item active" onclick="switchTab('dash')" id="nav-dash">
-            <i class="ph-fill ph-house"></i> Dash
-        </button>
-        <button class="nav-item" onclick="switchTab('treino')" id="nav-treino">
-            <i class="ph-fill ph-barbell"></i> Treinos
-        </button>
-        <button class="nav-item" onclick="switchTab('saves')" id="nav-saves">
-            <i class="ph-fill ph-floppy-disk"></i> Saves
-        </button>
-    </nav>
-
-    <button class="fab" onclick="abrirModalAdd()"><i class="ph-bold ph-plus"></i></button>
-
-    <div class="modal-overlay" id="modal-add">
-        <div class="modal-content">
-            <h2><i class="ph-fill ph-lightning" style="color:var(--accent)"></i> Novo Set</h2>
-            <div class="form-group">
-                <select id="md-cat" onchange="atualizarSelectExercicios()">
-                    <option value="calistenia">🦾 Calistenia Base</option>
-                    <option value="academia">🏋️ Academia / Pesos</option>
-                </select>
-                <select id="md-ex" onchange="preencherPesoAuto()"></select>
-                <div class="row-inputs">
-                    <input type="number" id="md-reps" placeholder="Reps" min="1">
-                    <input type="number" id="md-peso" placeholder="Kg (Opcional)" min="0" step="0.5">
+            <div class="flex-card card">
+                <div class="flex-card-header">
+                    <div class="flex-card-title"><i class="ph-bold ph-identification-card"></i> Cartão Flex - Perfil do Atleta</div>
+                    <span style="font-size:0.8rem; background:rgba(255,255,255,0.1); padding:4px 10px; border-radius:10px;" id="flex-rank-badge">RANK C</span>
                 </div>
-                <button class="btn-save" onclick="salvarTreinoModal()">SALVAR E DESCANSAR</button>
-                <button class="btn-close" onclick="fecharModal('modal-add')">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="modal-flex">
-        <div class="modal-content" style="background: transparent; border: none; box-shadow: none;">
-            <div class="flex-card" id="cartao-print">
-                <i class="ph-fill ph-crown" style="font-size:2rem; color:var(--xp-color)"></i>
-                <div style="font-weight:700; margin-top:10px; color:#94a3b8">ATLETA CALISTENIA PRO</div>
-                <div class="flex-level" id="flex-lvl">LVL 0</div>
+                <div style="font-size:1.1rem; font-weight:800;" id="flex-athlete-title">Guerreiro da Calistenia</div>
                 <div class="flex-stats">
                     <div>
-                        <span class="flex-val" id="flex-reps">0</span>
-                        <span class="flex-lbl">Reps Totais</span>
+                        <div class="flex-stat-number" id="flex-total-reps">0</div>
+                        <div class="flex-stat-label">Reps Totais</div>
                     </div>
                     <div>
-                        <span class="flex-val" id="flex-pr">0</span>
-                        <span class="flex-lbl">Max PR (Kg)</span>
+                        <div class="flex-stat-number" id="flex-streak-count">0</div>
+                        <div class="flex-stat-label">Dias Off-beat</div>
+                    </div>
+                    <div>
+                        <div class="flex-stat-number" id="flex-best-pr">0 kg</div>
+                        <div class="flex-stat-label">Maior PR</div>
                     </div>
                 </div>
             </div>
-            <p style="text-align:center; color:white; font-weight:700;">📸 Tire um Print para postar!</p>
-            <button class="btn-close" style="background:var(--glass-bg); border-radius:12px; color:white; padding:15px;" onclick="fecharModal('modal-flex')">Fechar</button>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="ph-bold ph-calendar-check" style="color:var(--accent)"></i> Heatmap de Constância (Últimos 28 Dias)</h2>
+                </div>
+                <p style="font-size:0.85rem; color:var(--text-light); margin-top:0;">Intensidade de treino por dia acumulado:</p>
+                <div class="heatmap-grid" id="heatmap-grid"></div>
+            </div>
+
+            <div class="chart-container">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3 style="margin:0; color:var(--text-main); font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <i class="ph-bold ph-ghost" style="color:var(--accent)"></i> O Fantasma (Volume x Semana Anterior)
+                    </h3>
+                </div>
+                <canvas id="evolucaoChart" height="90"></canvas>
+            </div>
+
+            <div class="timer-card card">
+                <h3 style="margin-top:0; font-size:1.1rem; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <i class="ph-bold ph-timer" style="color:var(--accent)"></i> Cronômetro de Descanso
+                </h3>
+                <div class="timer-display" id="timer-display">00:00</div>
+                <div class="timer-presets">
+                    <button class="btn-preset" onclick="setTimer(30)">30s</button>
+                    <button class="btn-preset" onclick="setTimer(60)">60s</button>
+                    <button class="btn-preset" onclick="setTimer(90)">90s</button>
+                    <button class="btn-preset" onclick="setTimer(120)">2 min</button>
+                </div>
+                <div style="display:flex; gap:10px; justify-content:center;">
+                    <button class="btn-save" onclick="startTimer()" style="background:var(--accent); flex:0 1 120px;"><i class="ph-bold ph-play"></i> Iniciar</button>
+                    <button class="btn-save" onclick="resetTimer()" style="background:var(--secondary); flex:0 1 120px;"><i class="ph-bold ph-stop"></i> Parar</button>
+                </div>
+            </div>
+
+            <div class="focus-grid">
+                <div class="focus-card"><div style="font-size:0.85rem; color:var(--text-light)">🦾 Flexão (Max)</div><div class="focus-numbers" id="dash-flexoes">0</div></div>
+                <div class="focus-card c-abd"><div style="font-size:0.85rem; color:var(--text-light)">🍫 Core (Max)</div><div class="focus-numbers" id="dash-abdominais" style="color:var(--color-abdominais)">0</div></div>
+                <div class="focus-card c-merg"><div style="font-size:0.85rem; color:var(--text-light)">🪑 Tríceps (Max)</div><div class="focus-numbers" id="dash-mergulhos" style="color:var(--color-mergulhos)">0</div></div>
+                <div class="focus-card c-acad"><div style="font-size:0.85rem; color:var(--text-light)">🏋️ Academia (Max)</div><div class="focus-numbers" id="dash-academia" style="color:var(--color-academia)">0</div></div>
+            </div>
+        </section>
+
+        <section id="flexoes" class="tab-content">
+            <div class="card">
+                <div class="card-header"><h2>🦾 Flexões</h2><span class="record-badge">Meta: 50</span></div>
+                <div id="lista-flexoes"></div>
+            </div>
+            <div class="card">
+                <h2>📝 Novo Registro</h2>
+                <div class="form-group">
+                    <select id="sel-flexoes"></select>
+                    <input type="number" id="in-flexoes-reps" placeholder="Reps" min="1">
+                    <button class="btn-save" onclick="salvarTreino('flexoes')" style="background:var(--accent)"><i class="ph-bold ph-check"></i> Salvar</button>
+                </div>
+            </div>
+            <div class="card"><h3 style="margin-top:0">🕒 Histórico</h3><div class="historico-lista" id="hist-flexoes"></div></div>
+        </section>
+
+        <section id="abdominais" class="tab-content">
+            <div class="card">
+                <div class="card-header"><h2>🍫 Core</h2><span class="record-badge">Meta: 50</span></div>
+                <div id="lista-abdominais"></div>
+            </div>
+            <div class="card">
+                <h2>📝 Novo Registro</h2>
+                <div class="form-group">
+                    <select id="sel-abdominais"></select>
+                    <input type="number" id="in-abdominais-reps" placeholder="Reps/Seg" min="1">
+                    <button class="btn-save" onclick="salvarTreino('abdominais')" style="background:var(--color-abdominais)"><i class="ph-bold ph-check"></i> Salvar</button>
+                </div>
+            </div>
+            <div class="card"><h3 style="margin-top:0">🕒 Histórico</h3><div class="historico-lista" id="hist-abdominais"></div></div>
+        </section>
+        
+        <section id="mergulhos" class="tab-content">
+            <div class="card">
+                <div class="card-header"><h2>🪑 Tríceps (Casa)</h2><span class="record-badge">Meta: 50</span></div>
+                <div id="lista-mergulhos"></div>
+            </div>
+            <div class="card">
+                <h2>📝 Novo Registro</h2>
+                <div class="form-group">
+                    <select id="sel-mergulhos"></select>
+                    <input type="number" id="in-mergulhos-reps" placeholder="Reps" min="1">
+                    <button class="btn-save" onclick="salvarTreino('mergulhos')" style="background:var(--color-mergulhos)"><i class="ph-bold ph-check"></i> Salvar</button>
+                </div>
+            </div>
+            <div class="card"><h3 style="margin-top:0">🕒 Histórico</h3><div class="historico-lista" id="hist-mergulhos"></div></div>
+        </section>
+        
+        <section id="academia" class="tab-content">
+            <div class="card">
+                <div class="card-header"><h2>🏋️ Academia & Calculadora PR</h2><span class="record-badge">1RM Estimado</span></div>
+                
+                <div class="filter-box">
+                    <span style="font-size:0.85rem; font-weight:600;">Filtrar:</span>
+                    <select id="filtro-grupo" onchange="renderizarListaAcademia()">
+                        <option value="Todos">Todos</option>
+                        <option value="Peito">Peito</option>
+                        <option value="Costas">Costas</option>
+                        <option value="Perna">Perna</option>
+                        <option value="Ombro">Ombro</option>
+                        <option value="Braço">Braço</option>
+                    </select>
+                </div>
+
+                <div id="lista-academia"></div>
+            </div>
+            
+            <div class="card">
+                <h2>📝 Registrar com Carga</h2>
+                
+                <div class="form-group create-group">
+                    <select id="novo-grupo-academia" style="flex:1">
+                        <option value="Peito">Peito</option><option value="Costas">Costas</option>
+                        <option value="Perna">Perna</option><option value="Ombro">Ombro</option><option value="Braço">Braço</option>
+                    </select>
+                    <input type="text" id="novo-ex-academia" placeholder="Ex: Supino Reto" style="flex:2">
+                    <button class="btn-save" onclick="criarExercicioAcademia()"><i class="ph-bold ph-plus"></i> Criar</button>
+                </div>
+
+                <div class="form-group">
+                    <select id="sel-academia" onchange="autoPreencherUltimoPeso()"></select>
+                    <input type="number" id="in-academia-reps" placeholder="Reps" min="1">
+                    <input type="number" id="in-academia-peso" placeholder="Peso (kg)" min="0" step="0.5">
+                    <button class="btn-save" onclick="salvarTreino('academia')" style="background:var(--color-academia)"><i class="ph-bold ph-check"></i> Salvar</button>
+                </div>
+            </div>
+            
+            <div class="card"><h3 style="margin-top:0">🕒 Histórico</h3><div class="historico-lista" id="hist-academia"></div></div>
+        </section>
+
+        <section id="saves" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="ph-bold ph-floppy-disk" style="color:var(--accent)"></i> Sistema de Saves & Fases</h2>
+                </div>
+                <p style="font-size:0.9rem; color:var(--text-light);">
+                    Mudou de ficha ou quer começar um ciclo novo? Arquive sua fase atual! Todo o histórico de treinos e nível atual serão gravados num Card de Save estilo videogame.
+                </p>
+                <div class="form-group">
+                    <input type="text" id="nome-fase-save" placeholder="Nome da Fase (ex: Ciclagem Hipertrofia A)" style="flex:3;">
+                    <button class="btn-save" onclick="arquivarEIniciarNovaFase()" style="background:var(--accent)"><i class="ph-bold ph-archive-box"></i> Arquivar Fase</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0;"><i class="ph-bold ph-folder-open"></i> Cards de Saves Guardados</h3>
+                <div id="lista-saves-guardados">
+                    </div>
+            </div>
+        </section>
+
+        <section id="ferramentas" class="tab-content">
+            <div class="card">
+                <div class="card-header"><h2><i class="ph-bold ph-shield-check" style="color:var(--accent)"></i> Backup & Restauração</h2></div>
+                <p style="font-size:0.9rem; color:var(--text-light)">Baixe um arquivo JSON com todo seu histórico para não perder nada ou transfira para outro celular.</p>
+                <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:15px;">
+                    <button class="btn-save" onclick="exportarBackup()" style="background:var(--primary)"><i class="ph-bold ph-download-simple"></i> Exportar JSON</button>
+                    <label class="btn-save" style="background:var(--secondary); text-align:center; cursor:pointer;">
+                        <i class="ph-bold ph-upload-simple"></i> Importar JSON
+                        <input type="file" id="file-import" onchange="importarBackup(event)" accept=".json" style="display:none;">
+                    </label>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <button class="fab-btn" onclick="abrirModalFAB()"><i class="ph-bold ph-plus"></i></button>
+
+    <div class="modal" id="modal-fab">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0; font-size:1.2rem;"><i class="ph-bold ph-lightning" style="color:var(--accent)"></i> Registro Rápido</h3>
+                <button onclick="fecharModalFAB()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-main);">&times;</button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <select id="fab-categoria" onchange="atualizarOpcoesModalFAB()">
+                    <option value="flexoes">Flexões</option>
+                    <option value="abdominais">Core</option>
+                    <option value="mergulhos">Tríceps</option>
+                    <option value="academia">Academia</option>
+                </select>
+                <select id="fab-exercicio" onchange="autoPreencherUltimoPesoFAB()"></select>
+                <input type="number" id="fab-reps" placeholder="Quantidade de Repetições" min="1">
+                <input type="number" id="fab-peso" placeholder="Peso / Carga (kg) - Se houver" min="0" step="0.5">
+                <button class="btn-save" onclick="salvarTreinoFAB()" style="background:var(--accent); margin-top:10px;"><i class="ph-bold ph-check"></i> Confirmar Treino</button>
+            </div>
         </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="bottom-nav-btn active-nav" onclick="mudarAba('inicio')" id="bnav-inicio"><i class="ph-bold ph-house"></i>Início</button>
+        <button class="bottom-nav-btn" onclick="mudarAba('flexoes')" id="bnav-flexoes"><i class="ph-bold ph-barbell"></i>Flexão</button>
+        <button class="bottom-nav-btn" onclick="mudarAba('abdominais')" id="bnav-abdominais"><i class="ph-bold ph-lightning"></i>Core</button>
+        <button class="bottom-nav-btn" onclick="mudarAba('academia')" id="bnav-academia"><i class="ph-bold ph-trophy"></i>Academia</button>
+        <button class="bottom-nav-btn" onclick="mudarAba('saves')" id="bnav-saves"><i class="ph-bold ph-floppy-disk"></i>Saves</button>
     </div>
 
     <script>
-        /* ======== VARIÁVEIS GLOBAIS ======== */
-        const DB_KEY = 'calisteniaPRO_V9_State';
-        let ghostChart = null;
-        let timerInterval = null;
+        const DB_KEY = 'calisteniaPRO_V6_Treinos';
+        const CUSTOM_EX_KEY = 'calisteniaPRO_V6_Ex';
+        const SAVES_KEY = 'calisteniaPRO_V7_Saves';
+        const RPG_KEY = 'calisteniaPRO_V7_RPG';
         const META = 50;
+        let meuGrafico = null;
+        let timerInterval = null;
+        let timerSeconds = 0;
 
-        const baseEx = {
-            calistenia: ["Flexão Tradicional", "Flexão Diamante", "Barra Fixa (Pull-up)", "Mergulho Paralelas", "Abdominal Infra", "L-Sit (Seg)"],
-            academia: ["Supino Reto", "Agachamento Livre", "Levantamento Terra", "Desenvolvimento Halter"]
+        const categoriasBase = {
+            flexoes: ["Flexão na Parede", "Flexão Inclinada", "Flexão com Joelhos", "Flexão Tradicional", "Flexão Diamante", "Flexão Declinada"],
+            abdominais: ["Abdominal Curto", "Toques no Calcanhar", "Abdominal Infra", "Abdominal Bicicleta", "L-Sit no Chão (Seg)"],
+            mergulhos: ["Extensão Tríceps Parede", "Extensão Tríceps Chão", "Mergulho Banco", "Mergulho Paralelas"],
+            academia: [] 
         };
 
-        let appState = {
-            activeSaveId: 'save_inicial',
-            saves: {
-                'save_inicial': { 
-                    nome: 'Fase 1: Construção', dataInicio: new Date().toISOString(), treinos: [], customAcademia: [...baseEx.academia] 
-                }
-            }
-        };
-
-        /* ======== INICIALIZAÇÃO ======== */
         document.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem(DB_KEY) || localStorage.getItem('calisteniaPRO_V8_State'); // Puxa o V8 se existir
-            if (saved) {
-                try { appState = JSON.parse(saved); } catch(e) { console.error("Erro ao carregar save."); }
-            }
-            if (!appState.saves[appState.activeSaveId]) {
-                const id = 'save_' + Date.now();
-                appState.activeSaveId = id;
-                appState.saves[id] = { nome: 'Nova Jornada', dataInicio: new Date().toISOString(), treinos: [], customAcademia: [...baseEx.academia] };
-            }
             verificarTema();
-            atualizarTudo();
+            carregarExerciciosAcademia();
+            inicializarListasFixas();
+            renderizarListaAcademia();
+            carregarSaves();
+            atualizarInterface();
         });
 
-        function salvarDados() { localStorage.setItem(DB_KEY, JSON.stringify(appState)); }
-        function getSaveAtivo() { return appState.saves[appState.activeSaveId]; }
-        function calcularPR(peso, reps) { return Math.round((peso * (1 + reps / 30)) * 10) / 10; }
-
-        /* ======== UI & NAVEGAÇÃO ======== */
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-            document.getElementById(`nav-${tabId}`).classList.add('active');
-            if (tabId === 'dash') renderizarGrafico();
-        }
-
+        /* ======== TEMA CLARO/ESCURO ======== */
         function verificarTema() {
-            const tema = localStorage.getItem('theme_V9') || 'dark';
-            document.documentElement.setAttribute('data-theme', tema);
-            document.getElementById('btn-theme').innerHTML = tema === 'dark' ? '<i class="ph-fill ph-sun"></i>' : '<i class="ph-fill ph-moon"></i>';
+            const tema = localStorage.getItem('temaCalistenia') || 'light';
+            if (tema === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('btn-theme').innerHTML = '<i class="ph-bold ph-sun"></i>';
+            }
         }
-
         function toggleTheme() {
-            const novo = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', novo);
-            localStorage.setItem('theme_V9', novo);
-            document.getElementById('btn-theme').innerHTML = novo === 'dark' ? '<i class="ph-fill ph-sun"></i>' : '<i class="ph-fill ph-moon"></i>';
-            if (ghostChart) renderizarGrafico();
+            const atual = document.documentElement.getAttribute('data-theme');
+            if (atual === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('temaCalistenia', 'light');
+                document.getElementById('btn-theme').innerHTML = '<i class="ph-bold ph-moon"></i>';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('temaCalistenia', 'dark');
+                document.getElementById('btn-theme').innerHTML = '<i class="ph-bold ph-sun"></i>';
+            }
+            atualizarInterface();
         }
 
-        function abrirModalAdd() { document.getElementById('modal-add').classList.add('open'); atualizarSelectExercicios(); }
-        function abrirModalFlex() { 
-            prepararCartaoFlex();
-            document.getElementById('modal-flex').classList.add('open'); 
-        }
-        function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+        /* ======== NAVEGAÇÃO ======== */
+        function abrirMenu() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('active'); }
+        function fecharMenu() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('active'); }
+        
+        function mudarAba(id) {
+            document.querySelectorAll('.tab-content').forEach(a => a.classList.remove('active'));
+            document.querySelectorAll('.menu-tab').forEach(b => b.classList.remove('active-tab'));
+            document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active-nav'));
 
-        /* ======== MOTOR CENTRAL ======== */
-        function atualizarTudo() {
-            const save = getSaveAtivo();
-            processarRPG(save.treinos);
-            renderizarListas(save);
-            renderizarSaves();
-            renderizarHeatmap(save.treinos);
-            if (document.getElementById('tab-dash').classList.contains('active')) renderizarGrafico();
-        }
-
-        function processarRPG(treinos) {
-            let totalXP = 0;
-            treinos.forEach(t => {
-                let xp = t.reps * 10;
-                if (t.peso && t.peso > 0) xp += Math.round(t.peso * t.reps * 1.5);
-                totalXP += xp;
-            });
-            let level = Math.floor(Math.sqrt(totalXP / 50)) + 1;
-            let xpNext = 50 * Math.pow(level, 2);
-            let xpPrev = 50 * Math.pow(level - 1, 2);
-            let pct = ((totalXP - xpPrev) / (xpNext - xpPrev)) * 100;
-
-            document.getElementById('lvl-display').innerText = `LVL ${level}`;
-            document.getElementById('xp-bar').style.width = `${pct}%`;
-            document.getElementById('xp-text').innerText = `${totalXP - xpPrev}/${xpNext - xpPrev} XP`;
-            return { totalXP, level };
-        }
-
-        function renderizarListas(save) {
-            const listCali = document.getElementById('lista-calistenia');
-            const listAcad = document.getElementById('lista-academia');
-            listCali.innerHTML = ''; listAcad.innerHTML = '';
-
-            // Renderizar Calistenia
-            baseEx.calistenia.forEach(ex => {
-                const treinosEx = save.treinos.filter(t => t.exercicio === ex);
-                const maxR = Math.max(0, ...treinosEx.map(t => t.reps));
-                const totalAcumulado = treinosEx.reduce((acc, t) => acc + t.reps, 0); // Cálculo do Volume Total
-                
-                let pct = Math.min((maxR / META) * 100, 100);
-                listCali.innerHTML += `
-                    <div class="exercise-item">
-                        <div class="exercise-info">
-                            <div>
-                                ${ex} <br>
-                                <span style="font-size: 0.75rem; color: var(--text-light); font-weight: 500;">
-                                    Acumulado: <strong style="color:var(--accent)">${totalAcumulado}</strong> reps
-                                </span>
-                            </div>
-                            <div style="text-align: right;">
-                                <span style="font-size: 0.65rem; color: var(--text-light); display: block; margin-bottom: 3px; text-transform: uppercase;">Maior Série</span>
-                                <span class="record-tag">${maxR} / ${META}</span>
-                            </div>
-                        </div>
-                        <div class="prog-bg"><div class="prog-fill" style="width: ${pct}%; background:${maxR>=META?'var(--xp-color)':'var(--accent)'}"></div></div>
-                    </div>`;
-            });
-
-            // Renderizar Academia
-            save.customAcademia.forEach(ex => {
-                const tEx = save.treinos.filter(t => t.exercicio === ex);
-                const maxR = Math.max(0, ...tEx.map(t => t.reps));
-                const totalAcumulado = tEx.reduce((acc, t) => acc + t.reps, 0); // Cálculo do Volume Total
-                
-                let maxPR = 0; 
-                tEx.forEach(t => { if(t.peso) maxPR = Math.max(maxPR, calcularPR(t.peso, t.reps)); });
-                
-                listAcad.innerHTML += `
-                    <div class="exercise-item">
-                        <div class="exercise-info">
-                            <div>
-                                ${ex} <span class="pr-tag">PR: ${maxPR}kg</span> <br>
-                                <span style="font-size: 0.75rem; color: var(--text-light); font-weight: 500;">
-                                    Acumulado: <strong style="color:var(--accent)">${totalAcumulado}</strong> reps
-                                </span>
-                            </div>
-                            <div style="text-align: right;">
-                                <span style="font-size: 0.65rem; color: var(--text-light); display: block; margin-bottom: 3px; text-transform: uppercase;">Maior Série</span>
-                                <span class="record-tag">${maxR} reps</span>
-                            </div>
-                        </div>
-                        <div class="prog-bg"><div class="prog-fill" style="width: ${Math.min((maxR/META)*100,100)}%"></div></div>
-                    </div>`;
-            });
-        }
-
-        /* ======== SALVAMENTO & CRONÔMETRO ======== */
-        function atualizarSelectExercicios() {
-            const isCali = document.getElementById('md-cat').value === 'calistenia';
-            const select = document.getElementById('md-ex');
-            select.innerHTML = (isCali ? baseEx.calistenia : getSaveAtivo().customAcademia).map(ex => `<option value="${ex}">${ex}</option>`).join('');
-            preencherPesoAuto();
-        }
-
-        function preencherPesoAuto() {
-            const inputPeso = document.getElementById('md-peso');
-            if(document.getElementById('md-cat').value === 'calistenia') { inputPeso.value = ''; inputPeso.disabled = true; return; }
-            inputPeso.disabled = false;
-            const ultimo = getSaveAtivo().treinos.find(t => t.exercicio === document.getElementById('md-ex').value && t.peso);
-            inputPeso.value = ultimo ? ultimo.peso : '';
-        }
-
-        function salvarTreinoModal() {
-            const reps = parseInt(document.getElementById('md-reps').value);
-            if(!reps || reps <= 0) return alert("Insira as repetições!");
+            document.getElementById(id).classList.add('active');
             
-            const novo = { 
-                id: Date.now(), categoria: document.getElementById('md-cat').value, exercicio: document.getElementById('md-ex').value, 
-                reps, peso: parseFloat(document.getElementById('md-peso').value) || null, dataIso: new Date().toISOString() 
-            };
-            
-            getSaveAtivo().treinos.unshift(novo);
-            salvarDados();
-            fecharModal('modal-add');
-            document.getElementById('md-reps').value = '';
-            atualizarTudo();
-            confetti({ particleCount: 50, spread: 60, colors: ['#00d2d3', '#feca57'] });
-            
-            // Inicia Cronômetro Flutuante
-            iniciarCronometro(90);
+            const btnSidebar = document.getElementById(`btn-${id}`);
+            if(btnSidebar) btnSidebar.classList.add('active-tab');
+
+            const btnBottom = document.getElementById(`bnav-${id}`);
+            if(btnBottom) btnBottom.classList.add('active-nav');
+
+            fecharMenu();
         }
 
-        function addExercicioAcademia() {
-            const nome = prompt("Nome do exercício:");
-            if(nome && !getSaveAtivo().customAcademia.includes(nome)) {
-                getSaveAtivo().customAcademia.push(nome); salvarDados(); atualizarTudo();
+        /* ======== BANCO DE DADOS ======== */
+        function lerTreinos() { return JSON.parse(localStorage.getItem(DB_KEY)) || []; }
+        function salvarTreinos(dados) { localStorage.setItem(DB_KEY, JSON.stringify(dados)); }
+
+        function carregarExerciciosAcademia() {
+            let salvos = JSON.parse(localStorage.getItem(CUSTOM_EX_KEY)) || [];
+            if(salvos.length > 0 && typeof salvos[0] === 'string') {
+                salvos = salvos.map(nome => ({ nome, grupo: 'Geral' }));
+                localStorage.setItem(CUSTOM_EX_KEY, JSON.stringify(salvos));
+            }
+            categoriasBase.academia = salvos;
+        }
+
+        /* ======== FÓRMULA DE PR (1RM - EPLEY) ======== */
+        function calcularPR(peso, reps) {
+            if (!peso || peso <= 0 || !reps || reps <= 0) return 0;
+            let pr = peso * (1 + reps / 30);
+            return Math.round(pr * 10) / 10;
+        }
+
+        /* ======== AUTO-PREENCHIMENTO INTELIGENTE ======== */
+        function autoPreencherUltimoPeso() {
+            const ex = document.getElementById('sel-academia').value;
+            if(!ex) return;
+            const banco = lerTreinos();
+            const ultimo = banco.find(t => t.exercicio === ex && t.peso);
+            if(ultimo) {
+                document.getElementById('in-academia-peso').value = ultimo.peso;
             }
         }
 
-        function iniciarCronometro(segundos) {
-            clearInterval(timerInterval);
-            let tempo = segundos;
-            const timerEl = document.getElementById('rest-timer');
-            const textoEl = document.getElementById('timer-text');
-            timerEl.classList.add('active');
+        function autoPreencherUltimoPesoFAB() {
+            const ex = document.getElementById('fab-exercicio').value;
+            if(!ex) return;
+            const banco = lerTreinos();
+            const ultimo = banco.find(t => t.exercicio === ex && t.peso);
+            if(ultimo) {
+                document.getElementById('fab-peso').value = ultimo.peso;
+            }
+        }
 
+        /* ======== INTERFACE & EXERCÍCIOS ======== */
+        function formatarID(nome) { return nome.replace(/[^a-zA-Z0-9]/g, '-'); }
+
+        function inicializarListasFixas() {
+            ['flexoes', 'abdominais', 'mergulhos'].forEach(cat => {
+                const select = document.getElementById(`sel-${cat}`);
+                const list = document.getElementById(`lista-${cat}`);
+                select.innerHTML = '<option value="">-- Escolher --</option>';
+                list.innerHTML = '';
+                
+                let cor = cat==='abdominais' ? "var(--color-abdominais)" : cat==='mergulhos' ? "var(--color-mergulhos)" : "var(--accent)";
+
+                categoriasBase[cat].forEach(ex => {
+                    select.innerHTML += `<option value="${ex}">${ex}</option>`;
+                    list.innerHTML += `
+                        <div class="exercise-item" id="prog-${formatarID(ex)}">
+                            <div class="exercise-info">
+                                <div style="display:flex; flex-direction:column; gap:2px;">
+                                    <span>${ex}</span>
+                                    <span style="font-size:0.75rem; color:var(--text-light);">Total Acumulado: <strong style="color:${cor}"><span class="val-acumulado">0</span></strong> reps</span>
+                                </div>
+                                <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                                    <span class="record-badge"><span class="val-rec">0</span> / 50</span>
+                                </div>
+                            </div>
+                            <div class="progress-bg"><div class="progress-fill" style="background: ${cor}"></div></div>
+                        </div>`;
+                });
+            });
+        }
+
+        function renderizarListaAcademia() {
+            const filtro = document.getElementById('filtro-grupo').value;
+            const select = document.getElementById('sel-academia');
+            const list = document.getElementById('lista-academia');
+            
+            select.innerHTML = '<option value="">-- Escolher --</option>';
+            list.innerHTML = '';
+
+            let exerciciosExibidos = categoriasBase.academia;
+            if (filtro !== 'Todos') {
+                exerciciosExibidos = categoriasBase.academia.filter(ex => ex.grupo === filtro);
+            }
+
+            if(exerciciosExibidos.length === 0) {
+                list.innerHTML = '<p style="color:var(--text-light); text-align:center;">Nenhum exercício cadastrado.</p>';
+            }
+
+            categoriasBase.academia.forEach(ex => { select.innerHTML += `<option value="${ex.nome}">[${ex.grupo}] ${ex.nome}</option>`; });
+
+            exerciciosExibidos.forEach(ex => {
+                list.innerHTML += `
+                    <div class="exercise-item" id="prog-acad-${formatarID(ex.nome)}">
+                        <div class="exercise-info">
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                <span><span style="color:var(--text-light); font-size:0.8rem">[${ex.grupo}]</span> ${ex.nome}</span>
+                                <span style="font-size:0.75rem; color:var(--text-light);">Total Acumulado: <strong style="color:var(--color-academia)"><span class="val-acumulado">0</span></strong> reps</span>
+                            </div>
+                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                                <span class="record-badge">Max: <span class="val-rec">0</span></span>
+                                <span class="pr-tag" style="margin-left:0;">PR: <span class="val-pr">0</span>kg</span>
+                            </div>
+                        </div>
+                        <div class="progress-bg"><div class="progress-fill" style="background: var(--color-academia)"></div></div>
+                    </div>`;
+            });
+            
+            atualizarInterface();
+        }
+
+        function criarExercicioAcademia() {
+            const nome = document.getElementById('novo-ex-academia').value.trim();
+            const grupo = document.getElementById('novo-grupo-academia').value;
+            
+            if(!nome) return alert("Digite o nome!");
+            if(categoriasBase.academia.some(e => e.nome.toLowerCase() === nome.toLowerCase())) return alert("Já existe!");
+
+            categoriasBase.academia.push({ nome, grupo });
+            localStorage.setItem(CUSTOM_EX_KEY, JSON.stringify(categoriasBase.academia));
+            document.getElementById('novo-ex-academia').value = '';
+            renderizarListaAcademia();
+        }
+
+        /* ======== SALVAR E GAMIFICAÇÃO / RPG ======== */
+        function salvarTreino(categoria) {
+            const ex = document.getElementById(`sel-${categoria}`).value;
+            const reps = parseInt(document.getElementById(`in-${categoria}-reps`).value);
+            const inputPeso = document.getElementById(`in-${categoria}-peso`);
+            const peso = inputPeso ? parseFloat(inputPeso.value) : null;
+
+            if (!ex || isNaN(reps) || reps <= 0) return alert('Preencha exercício e repetições corretamente!');
+
+            processarSalvarRegistro(categoria, ex, reps, peso);
+
+            document.getElementById(`in-${categoria}-reps`).value = '';
+            if(inputPeso) inputPeso.value = '';
+        }
+
+        function processarSalvarRegistro(categoria, ex, reps, peso) {
+            const dataObj = new Date();
+            const dataF = dataObj.toLocaleDateString('pt-BR');
+            const horaF = dataObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+            const treino = { id: Date.now(), categoria, exercicio: ex, reps, peso, dataIso: dataObj.toISOString(), dataStr: `${dataF} ${horaF}` };
+            
+            let banco = lerTreinos();
+            banco.unshift(treino);
+            salvarTreinos(banco);
+
+            // Adiciona XP do RPG (Mais XP se tiver carga)
+            let xpGanho = reps * (peso ? Math.round(peso / 2) + 2 : 1);
+            adicionarXP(xpGanho);
+
+            if (reps >= META) {
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.5 }, colors: ['#0fb9b1', '#fbc531', '#ff4757'] });
+            }
+
+            atualizarInterface();
+        }
+
+        function deletarTreino(id) {
+            if(confirm("Apagar registro?")) {
+                salvarTreinos(lerTreinos().filter(t => t.id !== id));
+                atualizarInterface();
+            }
+        }
+
+        /* ======== MODO RPG (LEVEL & XP) ======== */
+        function lerRPG() { return JSON.parse(localStorage.getItem(RPG_KEY)) || { xp: 0, level: 1 }; }
+        function salvarRPG(dados) { localStorage.setItem(RPG_KEY, JSON.stringify(dados)); }
+
+        function adicionarXP(qtd) {
+            let rpg = lerRPG();
+            rpg.xp += qtd;
+            salvarRPG(rpg);
+        }
+
+        function atualizarRPG() {
+            let rpg = lerRPG();
+            let xpNecessario = rpg.level * 100;
+
+            while(rpg.xp >= xpNecessario) {
+                rpg.xp -= xpNecessario;
+                rpg.level += 1;
+                xpNecessario = rpg.level * 100;
+                confetti({ particleCount: 200, spread: 100, origin: { y: 0.4 } });
+            }
+            salvarRPG(rpg);
+
+            document.getElementById('rpg-level-num').innerText = rpg.level;
+            document.getElementById('rpg-current-xp').innerText = rpg.xp;
+            document.getElementById('rpg-next-xp').innerText = xpNecessario;
+
+            let pct = (rpg.xp / xpNecessario) * 100;
+            document.getElementById('rpg-xp-fill').style.width = `${pct}%`;
+
+            // Títulos por nível
+            const titulos = ["Recruta", "Iniciante Calistênico", "Atleta Dedicado", "Monstro dos Treinos", "Super Saiyan", "Lenda Viva"];
+            let idx = Math.min(Math.floor(rpg.level / 3), titulos.length - 1);
+            document.getElementById('rpg-title').innerText = titulos[idx];
+            document.getElementById('flex-athlete-title').innerText = `${titulos[idx]} (Lvl ${rpg.level})`;
+            document.getElementById('flex-rank-badge').innerText = `RANK ${String.fromCharCode(69 - Math.min(rpg.level, 4))}`;
+        }
+
+        /* ======== HEATMAP DE CONSTÂNCIA ======== */
+        function renderizarHeatmap(banco) {
+            const grid = document.getElementById('heatmap-grid');
+            grid.innerHTML = '';
+            
+            const mapaDias = {};
+            banco.forEach(t => {
+                let dStr = new Date(t.dataIso).toDateString();
+                mapaDias[dStr] = (mapaDias[dStr] || 0) + t.reps;
+            });
+
+            for(let i=27; i>=0; i--) {
+                let d = new Date();
+                d.setDate(d.getDate() - i);
+                let dStr = d.toDateString();
+                let totalReps = mapaDias[dStr] || 0;
+
+                let level = 0;
+                if(totalReps > 0 && totalReps < 30) level = 1;
+                else if(totalReps >= 30 && totalReps < 70) level = 2;
+                else if(totalReps >= 70 && totalReps < 120) level = 3;
+                else if(totalReps >= 120) level = 4;
+
+                grid.innerHTML += `<div class="heatmap-cell" data-level="${level}" title="${d.toLocaleDateString('pt-BR')}: ${totalReps} reps"></div>`;
+            }
+        }
+
+        /* ======== CRONÔMETRO ======== */
+        function setTimer(secs) {
+            resetTimer();
+            timerSeconds = secs;
+            document.getElementById('timer-display').innerText = formatarTempo(timerSeconds);
+        }
+
+        function startTimer() {
+            if(timerSeconds <= 0 || timerInterval) return;
             timerInterval = setInterval(() => {
-                tempo--;
-                let m = Math.floor(tempo / 60).toString().padStart(2, '0');
-                let s = (tempo % 60).toString().padStart(2, '0');
-                textoEl.innerText = `${m}:${s}`;
-                if (tempo <= 0) {
+                timerSeconds--;
+                document.getElementById('timer-display').innerText = formatarTempo(timerSeconds);
+                if(timerSeconds <= 0) {
                     clearInterval(timerInterval);
-                    textoEl.innerText = "TREINAR!";
-                    setTimeout(() => timerEl.classList.remove('active'), 3000);
+                    timerInterval = null;
+                    if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                    alert("⏱️ Tempo de descanso finalizado!");
                 }
             }, 1000);
         }
 
-        /* ======== HEATMAP ======== */
-        function renderizarHeatmap(treinos) {
-            const container = document.getElementById('heatmap');
-            container.innerHTML = '';
-            
-            const hoje = new Date();
-            hoje.setHours(0,0,0,0);
-            let volumes = {};
-            let maxVol = 1; 
+        function resetTimer() {
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = null;
+            timerSeconds = 0;
+            document.getElementById('timer-display').innerText = "00:00";
+        }
 
-            for(let i=27; i>=0; i--) {
-                let d = new Date(hoje);
-                d.setDate(d.getDate() - i);
-                volumes[d.toDateString()] = 0;
+        function formatarTempo(s) {
+            let m = Math.floor(s / 60);
+            let seg = s % 60;
+            return `${m<10?'0':''}${m}:${seg<10?'0':''}${seg}`;
+        }
+
+        /* ======== MODAL FAB (REGISTRO RÁPIDO) ======== */
+        function abrirModalFAB() {
+            atualizarOpcoesModalFAB();
+            document.getElementById('modal-fab').classList.add('active');
+        }
+        function fecharModalFAB() { document.getElementById('modal-fab').classList.remove('active'); }
+
+        function atualizarOpcoesModalFAB() {
+            const cat = document.getElementById('fab-categoria').value;
+            const selEx = document.getElementById('fab-exercicio');
+            selEx.innerHTML = '';
+
+            let lista = cat === 'academia' ? categoriasBase.academia.map(e=>e.nome) : categoriasBase[cat];
+            lista.forEach(e => selEx.innerHTML += `<option value="${e}">${e}</option>`);
+
+            autoPreencherUltimoPesoFAB();
+        }
+
+        function salvarTreinoFAB() {
+            const cat = document.getElementById('fab-categoria').value;
+            const ex = document.getElementById('fab-exercicio').value;
+            const reps = parseInt(document.getElementById('fab-reps').value);
+            const peso = parseFloat(document.getElementById('fab-peso').value) || null;
+
+            if(!ex || isNaN(reps) || reps <= 0) return alert("Preencha as repetições!");
+
+            processarSalvarRegistro(cat, ex, reps, peso);
+            fecharModalFAB();
+            document.getElementById('fab-reps').value = '';
+        }
+
+        /* ======== SISTEMA DE SAVES & FASES ======== */
+        function lerSaves() { return JSON.parse(localStorage.getItem(SAVES_KEY)) || []; }
+        function salvarSaves(dados) { localStorage.setItem(SAVES_KEY, JSON.stringify(dados)); }
+
+        function arquivarEIniciarNovaFase() {
+            const nomeFase = document.getElementById('nome-fase-save').value.trim();
+            if(!nomeFase) return alert("Digite um nome para identificar esta fase de treinos!");
+
+            const treinosAtuais = lerTreinos();
+            const rpgAtual = lerRPG();
+
+            if(treinosAtuais.length === 0) return alert("Sua fase atual não possui treinos registrados para arquivar.");
+
+            const totalReps = treinosAtuais.reduce((acc, t) => acc + t.reps, 0);
+
+            const novoSave = {
+                id: Date.now(),
+                nome: nomeFase,
+                dataFinalizacao: new Date().toLocaleDateString('pt-BR'),
+                rpg: rpgAtual,
+                totalReps,
+                treinos: treinosAtuais
+            };
+
+            let saves = lerSaves();
+            saves.unshift(novoSave);
+            salvarSaves(saves);
+
+            // Zera registros da fase ativa
+            localStorage.removeItem(DB_KEY);
+            document.getElementById('nome-fase-save').value = '';
+
+            carregarSaves();
+            atualizarInterface();
+            alert(`🎉 Fase "${nomeFase}" arquivada com sucesso! Uma nova fase limpa foi iniciada.`);
+        }
+
+        function carregarSaves() {
+            const saves = lerSaves();
+            const div = document.getElementById('lista-saves-guardados');
+            if(saves.length === 0) {
+                div.innerHTML = '<p style="color:var(--text-light); text-align:center;">Nenhum Save de fase arquivado ainda.</p>';
+                return;
             }
-
-            treinos.forEach(t => {
-                let dStr = new Date(t.dataIso).toDateString();
-                if(volumes[dStr] !== undefined) {
-                    volumes[dStr] += t.reps;
-                    if(volumes[dStr] > maxVol) maxVol = volumes[dStr];
-                }
+            div.innerHTML = '';
+            saves.forEach(s => {
+                div.innerHTML += `
+                    <div class="save-card">
+                        <span class="save-badge">FASE ARQUIVADA</span>
+                        <h4 style="margin:0 0 8px 0; font-size:1.1rem; color:var(--text-main);">${s.nome}</h4>
+                        <div style="font-size:0.85rem; color:var(--text-light); display:flex; gap:15px; flex-wrap:wrap;">
+                            <span>📅 Concluído: ${s.dataFinalizacao}</span>
+                            <span>🔥 Nível Alcançado: ${s.rpg.level}</span>
+                            <span>💪 Repetições: ${s.totalReps}</span>
+                        </div>
+                    </div>`;
             });
+        }
 
-            Object.keys(volumes).forEach(dStr => {
-                let vol = volumes[dStr];
-                let cssClass = '';
-                if(vol > 0) {
-                    let ratio = vol / maxVol;
-                    if(ratio > 0.6) cssClass = 'heat-level-3';
-                    else if(ratio > 0.2) cssClass = 'heat-level-2';
-                    else cssClass = 'heat-level-1';
+        /* ======== BACKUP & RESTAURAÇÃO ======== */
+        function exportarBackup() {
+            const dados = {
+                treinos: lerTreinos(),
+                exercicios: JSON.parse(localStorage.getItem(CUSTOM_EX_KEY)) || [],
+                saves: lerSaves(),
+                rpg: lerRPG()
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dados));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `CalisteniaPRO_Backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importarBackup(event) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const dados = JSON.parse(e.target.result);
+                    if(dados.treinos) salvarTreinos(dados.treinos);
+                    if(dados.exercicios) localStorage.setItem(CUSTOM_EX_KEY, JSON.stringify(dados.exercicios));
+                    if(dados.saves) salvarSaves(dados.saves);
+                    if(dados.rpg) salvarRPG(dados.rpg);
+                    
+                    carregarExerciciosAcademia();
+                    inicializarListasFixas();
+                    renderizarListaAcademia();
+                    carregarSaves();
+                    atualizarInterface();
+                    alert("✅ Backup restaurado com sucesso!");
+                } catch(err) {
+                    alert("🚨 Erro ao carregar arquivo de backup!");
                 }
+            };
+            reader.readAsText(event.target.files[0]);
+        }
+
+        /* ======== MOTOR CENTRAL DE ATUALIZAÇÃO ======== */
+        function atualizarInterface() {
+            const banco = lerTreinos();
+            let destravouBadge1 = banco.length > 0;
+            let destravouBadge2 = false;
+            let destravouBadge3 = false;
+
+            let totalRepsAcumuladas = 0;
+            let maiorPRGlobal = 0;
+
+            // 1. Atualizar Abas e Progressos
+            ['flexoes', 'abdominais', 'mergulhos', 'academia'].forEach(cat => {
+                const treinos = banco.filter(t => t.categoria === cat);
+                const histDiv = document.getElementById(`hist-${cat}`);
                 
-                let formatData = new Date(dStr).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
-                container.innerHTML += `<div class="heat-square ${cssClass}" title="${formatData}: ${vol} reps"></div>`;
-            });
-        }
+                // Histórico
+                histDiv.innerHTML = treinos.length === 0 ? '<div class="registro-item">Vazio.</div>' : '';
+                treinos.slice(0, 15).forEach(item => {
+                    let txtP = item.peso ? `<span class="badge-peso">${item.peso}kg</span>` : "";
+                    let prCalculado = item.peso ? calcularPR(item.peso, item.reps) : 0;
+                    let txtPR = prCalculado > 0 ? `<span class="badge-pr-hist" title="PR Estimada neste set">PR: ${prCalculado}kg</span>` : "";
+                    
+                    histDiv.innerHTML += `
+                        <div class="registro-item">
+                            <div><strong style="display:block; color:var(--text-main)">${item.exercicio}</strong>
+                            ${item.reps} reps ${txtP} ${txtPR} <span class="data-registro">| ${item.dataStr}</span></div>
+                            <button class="btn-delete" onclick="deletarTreino(${item.id})"><i class="ph-bold ph-trash"></i></button>
+                        </div>`;
+                });
 
-        /* ======== FLEX CARD ======== */
-        function prepararCartaoFlex() {
-            const save = getSaveAtivo();
-            const stats = processarRPG(save.treinos);
+                // Barras, Dash e PRs
+                let maxGlobal = 0;
+                let listagem = cat === 'academia' ? categoriasBase.academia.map(e => e.nome) : categoriasBase[cat];
+
+                listagem.forEach(ex => {
+                    const tEx = treinos.filter(t => t.exercicio === ex);
+                    let maxR = tEx.length > 0 ? Math.max(...tEx.map(t => t.reps)) : 0;
+                    if(maxR > maxGlobal) maxGlobal = maxR;
+                    
+                    if (maxR >= META) destravouBadge2 = true;
+                    if (maxR > META) destravouBadge3 = true;
+
+                    if (cat === 'academia') {
+                        let maxPR = 0;
+                        let acumulado = 0;
+                        
+                        tEx.forEach(t => {
+                            acumulado += t.reps;
+                            if(t.peso) {
+                                let pr = calcularPR(t.peso, t.reps);
+                                if(pr > maxPR) maxPR = pr;
+                            }
+                        });
+
+                        if(maxPR > maiorPRGlobal) maiorPRGlobal = maxPR;
+                        totalRepsAcumuladas += acumulado;
+
+                        const elID = `prog-acad-${formatarID(ex)}`;
+                        const el = document.getElementById(elID);
+                        if(el) {
+                            el.querySelector('.val-rec').innerText = maxR;
+                            el.querySelector('.val-pr').innerText = maxPR;
+                            if(el.querySelector('.val-acumulado')) el.querySelector('.val-acumulado').innerText = acumulado;
+                            
+                            let pctReal = (maxR / META) * 100;
+                            let pctVis = pctReal > 100 ? 100 : pctReal;
+                            const barra = el.querySelector('.progress-fill');
+                            barra.style.width = `${pctVis}%`;
+                            barra.className = 'progress-fill ' + (pctReal > 100 ? 'fill-over' : pctReal === 100 ? 'fill-gold' : '');
+                        }
+                    } else {
+                        let acumulado = tEx.reduce((acc, t) => acc + t.reps, 0);
+                        totalRepsAcumuladas += acumulado;
+
+                        let pctReal = (maxR / META) * 100;
+                        let pctVis = pctReal > 100 ? 100 : pctReal;
+                        const el = document.getElementById(`prog-${formatarID(ex)}`);
+                        if(el) {
+                            el.querySelector('.val-rec').innerText = maxR + (pctReal > 100 ? ` (${pctReal.toFixed(0)}%)` : "");
+                            if(el.querySelector('.val-acumulado')) el.querySelector('.val-acumulado').innerText = acumulado;
+                            
+                            const barra = el.querySelector('.progress-fill');
+                            barra.style.width = `${pctVis}%`;
+                            barra.className = 'progress-fill ' + (pctReal > 100 ? 'fill-over' : pctReal === 100 ? 'fill-gold' : '');
+                        }
+                    }
+                });
+                
+                document.getElementById(`dash-${cat}`).innerText = maxGlobal;
+            });
+
+            // Cartão Flex
+            document.getElementById('flex-total-reps').innerText = totalRepsAcumuladas;
+            document.getElementById('flex-best-pr').innerText = `${maiorPRGlobal} kg`;
+
+            // Badges
+            document.getElementById('badge-1').className = 'badge ' + (destravouBadge1 ? 'unlocked' : '');
+            document.getElementById('badge-2').className = 'badge ' + (destravouBadge2 ? 'unlocked' : '');
+            document.getElementById('badge-3').className = 'badge ' + (destravouBadge3 ? 'unlocked' : '');
+
+            // Streak
+            const diasUnicos = [...new Set(banco.map(t => new Date(t.dataIso).toDateString()))].sort((a,b) => new Date(b) - new Date(a));
+            let streak = 0;
+            let hoje = new Date().toDateString();
+            let ontem = new Date(Date.now() - 86400000).toDateString();
             
-            let totalReps = save.treinos.reduce((acc, t) => acc + t.reps, 0);
-            let globalMaxPR = 0;
-            save.treinos.forEach(t => {
-                if(t.peso) globalMaxPR = Math.max(globalMaxPR, calcularPR(t.peso, t.reps));
-            });
+            if (diasUnicos.includes(hoje) || diasUnicos.includes(ontem)) {
+                let dataChecagem = new Date(diasUnicos[0]);
+                for(let diaStr of diasUnicos) {
+                    if (new Date(diaStr).toDateString() === dataChecagem.toDateString()) {
+                        streak++;
+                        dataChecagem.setDate(dataChecagem.getDate() - 1);
+                    } else break;
+                }
+            }
+            document.getElementById('streak-dias').innerText = `${streak} 🔥`;
+            document.getElementById('flex-streak-count').innerText = streak;
 
-            document.getElementById('flex-lvl').innerText = `LVL ${stats.level}`;
-            document.getElementById('flex-reps').innerText = totalReps;
-            document.getElementById('flex-pr').innerText = globalMaxPR;
+            // Missões RPG
+            renderizarMissoesDiarias(banco);
+
+            // RPG Status
+            atualizarRPG();
+
+            // Heatmap
+            renderizarHeatmap(banco);
+
+            // Gráfico Fantasma
+            renderizarGraficoFantasma(banco);
         }
 
-        /* ======== GRAFICO FANTASMA ======== */
-        function renderizarGrafico() {
-            const ctx = document.getElementById('ghostChart');
-            if(!ctx) return;
-            if(ghostChart) ghostChart.destroy();
+        /* ======== MISSÕES DIÁRIAS (RPG) ======== */
+        function renderizarMissoesDiarias(banco) {
+            const div = document.getElementById('lista-quest-diaria');
+            const hojeStr = new Date().toDateString();
+            const treinosHoje = banco.filter(t => new Date(t.dataIso).toDateString() === hojeStr);
+            const totalRepsHoje = treinosHoje.reduce((acc, t) => acc + t.reps, 0);
 
-            const treinos = getSaveAtivo().treinos;
+            const missoes = [
+                { desc: "Complete pelo menos 1 treino hoje", meta: 1, atual: treinosHoje.length, xp: 50 },
+                { desc: "Alcance 50 repetições acumuladas no dia", meta: 50, atual: totalRepsHoje, xp: 100 }
+            ];
+
+            div.innerHTML = '';
+            missoes.forEach(m => {
+                let concluida = m.atual >= m.meta;
+                div.innerHTML += `
+                    <div class="quest-item ${concluida ? 'done' : ''}">
+                        <span>${concluida ? '✅' : '🎯'} ${m.desc} (${m.atual}/${m.meta})</span>
+                        <span style="color:var(--xp-color)">+${m.xp} XP</span>
+                    </div>`;
+            });
+        }
+
+        /* ======== GRÁFICO FANTASMA ======== */
+        function renderizarGraficoFantasma(banco) {
+            const ctx = document.getElementById('evolucaoChart').getContext('2d');
+            if (meuGrafico) meuGrafico.destroy();
+
             const labels = [];
-            const dAtual = []; const dPass = [];
+            const dataEstaSemana = {};
+            const dataSemanaPassada = {};
 
             for(let i=6; i>=0; i--) {
-                let d1 = new Date(); d1.setDate(d1.getDate() - i);
-                let d2 = new Date(); d2.setDate(d2.getDate() - (i + 7));
-                labels.push(d1.toLocaleDateString('pt-BR', {weekday:'short'}));
+                let d = new Date();
+                d.setDate(d.getDate() - i);
+                let lbl = d.toLocaleDateString('pt-BR', {weekday:'short'});
+                labels.push(lbl);
                 
-                dAtual.push(treinos.filter(t => new Date(t.dataIso).toDateString() === d1.toDateString()).reduce((a,b)=>a+b.reps,0));
-                dPass.push(treinos.filter(t => new Date(t.dataIso).toDateString() === d2.toDateString()).reduce((a,b)=>a+b.reps,0));
+                let diaIso = d.toDateString();
+                dataEstaSemana[diaIso] = 0;
+
+                let dPassado = new Date(d);
+                dPassado.setDate(dPassado.getDate() - 7);
+                dataSemanaPassada[dPassado.toDateString()] = 0;
             }
 
-            const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-            ghostChart = new Chart(ctx.getContext('2d'), {
+            banco.forEach(t => {
+                let dStr = new Date(t.dataIso).toDateString();
+                if (dataEstaSemana[dStr] !== undefined) dataEstaSemana[dStr] += t.reps;
+                if (dataSemanaPassada[dStr] !== undefined) dataSemanaPassada[dStr] += t.reps;
+            });
+
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const colorLine = isDark ? '#0fb9b1' : '#0fb9b1';
+            const colorGhost = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)';
+            const colorGrid = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
+
+            meuGrafico = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels,
+                    labels: labels,
                     datasets: [
-                        { label:'Semana Atual', data: dAtual, borderColor: '#00d2d3', backgroundColor: '#00d2d340', fill: true, tension: 0.4 },
-                        { label:'Fantasma', data: dPass, borderColor: isDark?'rgba(255,255,255,0.2)':'rgba(0,0,0,0.2)', borderDash:[5,5], tension: 0.4 }
+                        {
+                            label: 'Esta Semana',
+                            data: Object.values(dataEstaSemana),
+                            borderColor: colorLine,
+                            backgroundColor: colorLine + '30',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'O Fantasma (Semana Passada)',
+                            data: Object.values(dataSemanaPassada),
+                            borderColor: colorGhost,
+                            borderDash: [5, 5],
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3
+                        }
                     ]
                 },
-                options: { scales: { x:{display:false}, y:{display:false} }, plugins: { legend: {display:false} } } 
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: true, labels: { color: isDark ? '#a4b0be' : '#747d8c' } } },
+                    scales: {
+                        x: { grid: { color: colorGrid }, ticks: { color: isDark ? '#a4b0be' : '#747d8c' } },
+                        y: { grid: { color: colorGrid }, ticks: { color: isDark ? '#a4b0be' : '#747d8c', stepSize: 50 }, beginAtZero: true }
+                    }
+                }
             });
         }
 
-        /* ======== BACKUP E ROTINAS ======== */
-        function renderizarSaves() {
-            const div = document.getElementById('lista-saves');
-            div.innerHTML = Object.keys(appState.saves).sort((a,b) => new Date(appState.saves[b].dataInicio) - new Date(appState.saves[a].dataInicio)).map(id => {
-                const s = appState.saves[id];
-                const isActive = id === appState.activeSaveId;
-                return `
-                <div style="border: 1px solid ${isActive?'var(--accent)':'var(--glass-border)'}; padding: 15px; border-radius: 16px; margin-bottom: 10px; opacity: ${isActive?'1':'0.7'}; background: rgba(0,0,0,0.2)">
-                    <div style="font-weight:900; font-size:1.1rem; color:${isActive?'var(--accent)':'var(--text-main)'}">${s.nome}</div>
-                    <div style="font-size:0.8rem; color:var(--text-light); margin-top:5px;">${new Date(s.dataInicio).toLocaleDateString('pt-BR')} - ${s.treinos.length} Treinos</div>
-                    ${!isActive ? `<button onclick="carregarSave('${id}')" style="margin-top:10px; padding:8px; border-radius:8px; width:100%; border:none; cursor:pointer;">Ativar Rotina</button>` : ''}
-                </div>`;
-            }).join('');
-        }
-
-        function arquivarRotina() {
-            const nome = prompt("Nome da NOVA Fase (ex: Foco Peito):");
-            if(!nome) return;
-            const novoId = 'save_' + Date.now();
-            appState.saves[novoId] = { nome, dataInicio: new Date().toISOString(), treinos: [], customAcademia: [...appState.saves[appState.activeSaveId].customAcademia] };
-            appState.activeSaveId = novoId;
-            salvarDados(); atualizarTudo(); switchTab('dash');
-        }
-
-        function carregarSave(id) {
-            if(confirm("Deseja ativar este save?")) { appState.activeSaveId = id; salvarDados(); atualizarTudo(); switchTab('dash'); }
-        }
-
-        function exportarDados() {
-            const dadosStr = JSON.stringify(appState);
-            navigator.clipboard.writeText(dadosStr).then(() => {
-                alert("✅ Save copiado! Cole no Bloco de Notas ou WhatsApp para guardar com segurança.");
-            }).catch(() => {
-                prompt("Copie o texto abaixo para salvar seu progresso:", dadosStr);
-            });
-        }
-
-        function importarDados() {
-            const input = prompt("Cole o texto do seu Save copiado anteriormente:");
-            if(!input) return;
-            try {
-                const validacao = JSON.parse(input);
-                if(validacao.saves && validacao.activeSaveId) {
-                    appState = validacao;
-                    salvarDados(); atualizarTudo();
-                    alert("✅ Progresso recuperado com sucesso!");
-                } else alert("❌ Código inválido!");
-            } catch(e) { alert("❌ Erro ao ler o código."); }
+        function limparTudo() {
+            if(confirm('🚨 Apagar treinos da fase atual? Seus Saves antigos continuarão guardados.')) {
+                localStorage.removeItem(DB_KEY);
+                atualizarInterface();
+            }
         }
     </script>
 </body>

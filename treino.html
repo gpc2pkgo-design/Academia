@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calistenia PRO V9 - Volume Acumulado</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+
+        :root {
+            --accent: #00d2d3;
+            --accent-glow: rgba(0, 210, 211, 0.4);
+            --danger: #ff6b6b;
+            --xp-color: #feca57;
+            
+            /* Glassmorphism Escuro (Padrão) */
+            --bg-gradient: linear-gradient(-45deg, #0f172a, #1e1b4b, #171717, #020617);
+            --glass-bg: rgba(30, 41, 59, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-light: #94a3b8;
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        [data-theme="light"] {
+            --bg-gradient: linear-gradient(-45deg, #e2e8f0, #f8fafc, #e0e7ff, #f1f5f9);
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --text-main: #0f172a;
+            --text-light: #64748b;
+            --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0; padding: 0; padding-top: 80px; padding-bottom: 90px;
+            background: var(--bg-gradient); background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite; color: var(--text-main); min-height: 100vh;
+        }
+
+        @keyframes gradientBG { 0% {background-position: 0% 50%} 50% {background-position: 100% 50%} 100% {background-position: 0% 50%} }
+
+        /* ======= HEADER & XP BAR ======= */
+        header {
+            position: fixed; top: 0; width: 100%; z-index: 50;
+            background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border); padding: 15px 20px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .level-badge { background: var(--accent); color: #000; padding: 4px 10px; border-radius: 8px; font-weight: 900; font-size: 0.9rem; box-shadow: 0 0 10px var(--accent-glow);}
+        
+        .xp-container { width: 100%; display: flex; align-items: center; gap: 10px; }
+        .xp-bar-bg { flex: 1; height: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; border: 1px solid var(--glass-border);}
+        .xp-fill { height: 100%; background: var(--xp-color); width: 0%; transition: width 1s ease; box-shadow: 0 0 10px var(--xp-color); }
+        .xp-text { font-size: 0.8rem; font-weight: 700; color: var(--xp-color); min-width: 60px; text-align: right;}
+        .theme-btn { background: none; border: none; color: var(--text-main); font-size: 1.2rem; cursor: pointer; }
+
+        /* ======= TIMER FLUTUANTE ======= */
+        .rest-timer {
+            position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 99;
+            background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--accent);
+            padding: 8px 20px; border-radius: 30px; font-weight: 900; font-size: 1.1rem; color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow); display: none; align-items: center; gap: 8px;
+        }
+        .rest-timer.active { display: flex; animation: slideDown 0.3s ease; }
+        @keyframes slideDown { from { top: 60px; opacity: 0; } to { top: 90px; opacity: 1; } }
+
+        /* ======= LAYOUT & CARDS ======= */
+        .container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .glass-card {
+            background: var(--glass-bg); backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px;
+            box-shadow: var(--card-shadow); margin-bottom: 25px;
+        }
+        h2, h3 { margin-top: 0; }
+
+        /* ======= HEATMAP (CONSTÂNCIA) ======= */
+        .heatmap-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 15px; }
+        .heat-square { width: 14px; height: 14px; border-radius: 3px; background: rgba(0,0,0,0.1); border: 1px solid var(--glass-border); }
+        .heat-level-1 { background: rgba(0, 210, 211, 0.3); border-color: transparent;}
+        .heat-level-2 { background: rgba(0, 210, 211, 0.6); border-color: transparent;}
+        .heat-level-3 { background: rgba(0, 210, 211, 1); border-color: transparent; box-shadow: 0 0 5px var(--accent-glow);}
+
+        /* ======= BOTÕES GENÉRICOS ======= */
+        .btn-flex { background: linear-gradient(45deg, #feca57, #ff9f43); color: #000; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 900; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 5px 15px rgba(254, 202, 87, 0.4); width: 100%; justify-content: center;}
+        .btn-flex:active { transform: scale(0.98); }
+        
+        .btn-action { background: rgba(0,0,0,0.2); color: var(--text-main); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; cursor: pointer; font-weight: 700; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .btn-action:hover { background: rgba(255,255,255,0.05); }
+
+        /* ======= LISTAS E BARRAS ======= */
+        .exercise-item { margin-bottom: 25px; }
+        .exercise-info { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 700; font-size: 0.95rem; align-items: center;}
+        .record-tag { background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--glass-border); display: inline-block;}
+        .pr-tag { color: var(--xp-color); margin-left: 8px; font-size: 0.75rem;}
+        .prog-bg { background: rgba(0,0,0,0.2); height: 12px; border-radius: 10px; overflow: hidden; border: 1px inset var(--glass-border); }
+        .prog-fill { height: 100%; background: var(--accent); width: 0%; border-radius: 10px; transition: 1s ease; box-shadow: 0 0 10px var(--accent-glow);}
+
+        /* ======= BOTTOM NAV & FAB ======= */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; z-index: 50;
+            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass-border); display: flex; justify-content: space-around; padding: 10px 10px 20px 10px;
+        }
+        .nav-item { background: none; border: none; color: var(--text-light); display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-size: 0.7rem; font-weight: 700; flex: 1; transition: 0.3s;}
+        .nav-item i { font-size: 1.8rem; }
+        .nav-item.active { color: var(--accent); transform: translateY(-3px); }
+
+        .fab {
+            position: fixed; bottom: 85px; right: 20px; z-index: 60;
+            width: 60px; height: 60px; border-radius: 30px;
+            background: var(--accent); color: #000; display: flex; justify-content: center; align-items: center;
+            font-size: 2rem; box-shadow: 0 5px 20px var(--accent-glow); border: none; cursor: pointer; transition: 0.2s;
+        }
+        .fab:active { transform: scale(0.9); }
+
+        /* ======= MODAIS ======= */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            z-index: 100; display: none; justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-overlay.open { display: flex; animation: fadeIn 0.2s; }
+        .modal-content {
+            background: var(--glass-bg); backdrop-filter: blur(20px); width: 100%; max-width: 400px;
+            border: 1px solid var(--glass-border); border-radius: 24px; padding: 25px; box-shadow: var(--card-shadow);
+        }
+
+        /* ESTILO DO CARTÃO FLEX (PRINT) */
+        .flex-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid var(--xp-color);
+            border-radius: 20px; padding: 30px; text-align: center; color: white; position: relative; overflow: hidden;
+            box-shadow: 0 0 30px rgba(254, 202, 87, 0.3); margin-bottom: 20px;
+        }
+        .flex-card::before { content:''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(254,202,87,0.1) 0%, transparent 70%); }
+        .flex-level { font-size: 3rem; font-weight: 900; color: var(--xp-color); margin: 10px 0; text-shadow: 0 0 10px rgba(254, 202, 87, 0.5);}
+        .flex-stats { display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;}
+        .flex-stats div { flex: 1; }
+        .flex-val { font-size: 1.5rem; font-weight: 900; display: block; color: var(--accent); }
+        .flex-lbl { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 1px;}
+        
+        /* Forms */
+        .form-group { display: flex; flex-direction: column; gap: 15px; margin-top: 20px;}
+        select, input { background: rgba(0,0,0,0.2); color: var(--text-main); border: 1px solid var(--glass-border); padding: 15px; border-radius: 12px; font-size: 1rem; font-weight: 600; outline: none; }
+        select:focus, input:focus { border-color: var(--accent); }
+        .row-inputs { display: flex; gap: 10px; }
+        .row-inputs input { flex: 1; }
+        .btn-save { background: var(--accent); color: #000; border: none; padding: 15px; border-radius: 12px; font-weight: 900; font-size: 1.1rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;}
+        .btn-close { background: none; color: var(--text-light); border: none; margin-top: 10px; width: 100%; padding: 10px; font-weight: 700; cursor: pointer;}
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-top">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div class="level-badge" id="lvl-display">LVL 1</div>
+                <h1 style="margin:0; font-size:1.1rem; font-weight:900;">RPG Tracker V9</h1>
+            </div>
+            <button class="theme-btn" onclick="toggleTheme()" id="btn-theme"><i class="ph-fill ph-moon"></i></button>
+        </div>
+        <div class="xp-container">
+            <div class="xp-bar-bg"><div class="xp-fill" id="xp-bar"></div></div>
+            <div class="xp-text" id="xp-text">0/50 XP</div>
+        </div>
+    </header>
+
+    <div class="rest-timer" id="rest-timer">
+        <i class="ph-bold ph-timer"></i> <span id="timer-text">01:30</span>
+    </div>
+
+    <div class="container">
+        
+        <main id="tab-dash" class="tab-content active">
+            
+            <button class="btn-flex" onclick="abrirModalFlex()" style="margin-bottom: 25px;">
+                <i class="ph-fill ph-instagram-logo"></i> Gerar Cartão de Atleta
+            </button>
+
+            <div class="glass-card">
+                <h3 style="margin:0;"><i class="ph-fill ph-calendar-check" style="color:var(--accent);"></i> Constância (28 Dias)</h3>
+                <div class="heatmap-grid" id="heatmap"></div>
+            </div>
+
+            <div class="glass-card">
+                <h3><i class="ph-fill ph-chart-line-up" style="color:var(--accent);"></i> Fantasma (VS Sem. Passada)</h3>
+                <canvas id="ghostChart" height="180"></canvas>
+            </div>
+        </main>
+
+        <main id="tab-treino" class="tab-content">
+            <div class="glass-card">
+                <h3>🦾 Calistenia (Meta por Série: 50)</h3>
+                <div id="lista-calistenia"></div>
+            </div>
+            <div class="glass-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                    <h3 style="margin:0;">🏋️ Academia & PR</h3>
+                    <button onclick="addExercicioAcademia()" style="background:var(--glass-border); color:var(--text-main); border:none; padding:5px 12px; border-radius:8px; font-weight:700;">+ Criar</button>
+                </div>
+                <div id="lista-academia"></div>
+            </div>
+        </main>
+
+        <main id="tab-saves" class="tab-content">
+            <div class="glass-card" style="text-align:center;">
+                <h3><i class="ph-fill ph-shield-check" style="color:var(--accent); font-size:2rem;"></i><br>Segurança de Dados</h3>
+                <p style="color:var(--text-light); font-size:0.9rem;">Proteja seu progresso. Exporte seu save para o WhatsApp ou Bloco de Notas.</p>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button class="btn-action" onclick="exportarDados()"><i class="ph-bold ph-export"></i> Exportar</button>
+                    <button class="btn-action" onclick="importarDados()"><i class="ph-bold ph-download-simple"></i> Importar</button>
+                </div>
+            </div>
+
+            <h3 style="margin-left: 10px;">Fases de Treinamento:</h3>
+            <button class="btn-action" onclick="arquivarRotina()" style="margin-bottom: 15px; border-color:var(--accent); color:var(--accent);">
+                <i class="ph-bold ph-plus"></i> Iniciar Nova Fase
+            </button>
+            <div id="lista-saves"></div>
+        </main>
+
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('dash')" id="nav-dash">
+            <i class="ph-fill ph-house"></i> Dash
+        </button>
+        <button class="nav-item" onclick="switchTab('treino')" id="nav-treino">
+            <i class="ph-fill ph-barbell"></i> Treinos
+        </button>
+        <button class="nav-item" onclick="switchTab('saves')" id="nav-saves">
+            <i class="ph-fill ph-floppy-disk"></i> Saves
+        </button>
+    </nav>
+
+    <button class="fab" onclick="abrirModalAdd()"><i class="ph-bold ph-plus"></i></button>
+
+    <div class="modal-overlay" id="modal-add">
+        <div class="modal-content">
+            <h2><i class="ph-fill ph-lightning" style="color:var(--accent)"></i> Novo Set</h2>
+            <div class="form-group">
+                <select id="md-cat" onchange="atualizarSelectExercicios()">
+                    <option value="calistenia">🦾 Calistenia Base</option>
+                    <option value="academia">🏋️ Academia / Pesos</option>
+                </select>
+                <select id="md-ex" onchange="preencherPesoAuto()"></select>
+                <div class="row-inputs">
+                    <input type="number" id="md-reps" placeholder="Reps" min="1">
+                    <input type="number" id="md-peso" placeholder="Kg (Opcional)" min="0" step="0.5">
+                </div>
+                <button class="btn-save" onclick="salvarTreinoModal()">SALVAR E DESCANSAR</button>
+                <button class="btn-close" onclick="fecharModal('modal-add')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-flex">
+        <div class="modal-content" style="background: transparent; border: none; box-shadow: none;">
+            <div class="flex-card" id="cartao-print">
+                <i class="ph-fill ph-crown" style="font-size:2rem; color:var(--xp-color)"></i>
+                <div style="font-weight:700; margin-top:10px; color:#94a3b8">ATLETA CALISTENIA PRO</div>
+                <div class="flex-level" id="flex-lvl">LVL 0</div>
+                <div class="flex-stats">
+                    <div>
+                        <span class="flex-val" id="flex-reps">0</span>
+                        <span class="flex-lbl">Reps Totais</span>
+                    </div>
+                    <div>
+                        <span class="flex-val" id="flex-pr">0</span>
+                        <span class="flex-lbl">Max PR (Kg)</span>
+                    </div>
+                </div>
+            </div>
+            <p style="text-align:center; color:white; font-weight:700;">📸 Tire um Print para postar!</p>
+            <button class="btn-close" style="background:var(--glass-bg); border-radius:12px; color:white; padding:15px;" onclick="fecharModal('modal-flex')">Fechar</button>
+        </div>
+    </div>
+
+    <script>
+        /* ======== VARIÁVEIS GLOBAIS ======== */
+        const DB_KEY = 'calisteniaPRO_V9_State';
+        let ghostChart = null;
+        let timerInterval = null;
+        const META = 50;
+
+        const baseEx = {
+            calistenia: ["Flexão Tradicional", "Flexão Diamante", "Barra Fixa (Pull-up)", "Mergulho Paralelas", "Abdominal Infra", "L-Sit (Seg)"],
+            academia: ["Supino Reto", "Agachamento Livre", "Levantamento Terra", "Desenvolvimento Halter"]
+        };
+
+        let appState = {
+            activeSaveId: 'save_inicial',
+            saves: {
+                'save_inicial': { 
+                    nome: 'Fase 1: Construção', dataInicio: new Date().toISOString(), treinos: [], customAcademia: [...baseEx.academia] 
+                }
+            }
+        };
+
+        /* ======== INICIALIZAÇÃO ======== */
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem(DB_KEY) || localStorage.getItem('calisteniaPRO_V8_State'); // Puxa o V8 se existir
+            if (saved) {
+                try { appState = JSON.parse(saved); } catch(e) { console.error("Erro ao carregar save."); }
+            }
+            if (!appState.saves[appState.activeSaveId]) {
+                const id = 'save_' + Date.now();
+                appState.activeSaveId = id;
+                appState.saves[id] = { nome: 'Nova Jornada', dataInicio: new Date().toISOString(), treinos: [], customAcademia: [...baseEx.academia] };
+            }
+            verificarTema();
+            atualizarTudo();
+        });
+
+        function salvarDados() { localStorage.setItem(DB_KEY, JSON.stringify(appState)); }
+        function getSaveAtivo() { return appState.saves[appState.activeSaveId]; }
+        function calcularPR(peso, reps) { return Math.round((peso * (1 + reps / 30)) * 10) / 10; }
+
+        /* ======== UI & NAVEGAÇÃO ======== */
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            document.getElementById(`nav-${tabId}`).classList.add('active');
+            if (tabId === 'dash') renderizarGrafico();
+        }
+
+        function verificarTema() {
+            const tema = localStorage.getItem('theme_V9') || 'dark';
+            document.documentElement.setAttribute('data-theme', tema);
+            document.getElementById('btn-theme').innerHTML = tema === 'dark' ? '<i class="ph-fill ph-sun"></i>' : '<i class="ph-fill ph-moon"></i>';
+        }
+
+        function toggleTheme() {
+            const novo = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', novo);
+            localStorage.setItem('theme_V9', novo);
+            document.getElementById('btn-theme').innerHTML = novo === 'dark' ? '<i class="ph-fill ph-sun"></i>' : '<i class="ph-fill ph-moon"></i>';
+            if (ghostChart) renderizarGrafico();
+        }
+
+        function abrirModalAdd() { document.getElementById('modal-add').classList.add('open'); atualizarSelectExercicios(); }
+        function abrirModalFlex() { 
+            prepararCartaoFlex();
+            document.getElementById('modal-flex').classList.add('open'); 
+        }
+        function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+
+        /* ======== MOTOR CENTRAL ======== */
+        function atualizarTudo() {
+            const save = getSaveAtivo();
+            processarRPG(save.treinos);
+            renderizarListas(save);
+            renderizarSaves();
+            renderizarHeatmap(save.treinos);
+            if (document.getElementById('tab-dash').classList.contains('active')) renderizarGrafico();
+        }
+
+        function processarRPG(treinos) {
+            let totalXP = 0;
+            treinos.forEach(t => {
+                let xp = t.reps * 10;
+                if (t.peso && t.peso > 0) xp += Math.round(t.peso * t.reps * 1.5);
+                totalXP += xp;
+            });
+            let level = Math.floor(Math.sqrt(totalXP / 50)) + 1;
+            let xpNext = 50 * Math.pow(level, 2);
+            let xpPrev = 50 * Math.pow(level - 1, 2);
+            let pct = ((totalXP - xpPrev) / (xpNext - xpPrev)) * 100;
+
+            document.getElementById('lvl-display').innerText = `LVL ${level}`;
+            document.getElementById('xp-bar').style.width = `${pct}%`;
+            document.getElementById('xp-text').innerText = `${totalXP - xpPrev}/${xpNext - xpPrev} XP`;
+            return { totalXP, level };
+        }
+
+        function renderizarListas(save) {
+            const listCali = document.getElementById('lista-calistenia');
+            const listAcad = document.getElementById('lista-academia');
+            listCali.innerHTML = ''; listAcad.innerHTML = '';
+
+            // Renderizar Calistenia
+            baseEx.calistenia.forEach(ex => {
+                const treinosEx = save.treinos.filter(t => t.exercicio === ex);
+                const maxR = Math.max(0, ...treinosEx.map(t => t.reps));
+                const totalAcumulado = treinosEx.reduce((acc, t) => acc + t.reps, 0); // Cálculo do Volume Total
+                
+                let pct = Math.min((maxR / META) * 100, 100);
+                listCali.innerHTML += `
+                    <div class="exercise-item">
+                        <div class="exercise-info">
+                            <div>
+                                ${ex} <br>
+                                <span style="font-size: 0.75rem; color: var(--text-light); font-weight: 500;">
+                                    Acumulado: <strong style="color:var(--accent)">${totalAcumulado}</strong> reps
+                                </span>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 0.65rem; color: var(--text-light); display: block; margin-bottom: 3px; text-transform: uppercase;">Maior Série</span>
+                                <span class="record-tag">${maxR} / ${META}</span>
+                            </div>
+                        </div>
+                        <div class="prog-bg"><div class="prog-fill" style="width: ${pct}%; background:${maxR>=META?'var(--xp-color)':'var(--accent)'}"></div></div>
+                    </div>`;
+            });
+
+            // Renderizar Academia
+            save.customAcademia.forEach(ex => {
+                const tEx = save.treinos.filter(t => t.exercicio === ex);
+                const maxR = Math.max(0, ...tEx.map(t => t.reps));
+                const totalAcumulado = tEx.reduce((acc, t) => acc + t.reps, 0); // Cálculo do Volume Total
+                
+                let maxPR = 0; 
+                tEx.forEach(t => { if(t.peso) maxPR = Math.max(maxPR, calcularPR(t.peso, t.reps)); });
+                
+                listAcad.innerHTML += `
+                    <div class="exercise-item">
+                        <div class="exercise-info">
+                            <div>
+                                ${ex} <span class="pr-tag">PR: ${maxPR}kg</span> <br>
+                                <span style="font-size: 0.75rem; color: var(--text-light); font-weight: 500;">
+                                    Acumulado: <strong style="color:var(--accent)">${totalAcumulado}</strong> reps
+                                </span>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 0.65rem; color: var(--text-light); display: block; margin-bottom: 3px; text-transform: uppercase;">Maior Série</span>
+                                <span class="record-tag">${maxR} reps</span>
+                            </div>
+                        </div>
+                        <div class="prog-bg"><div class="prog-fill" style="width: ${Math.min((maxR/META)*100,100)}%"></div></div>
+                    </div>`;
+            });
+        }
+
+        /* ======== SALVAMENTO & CRONÔMETRO ======== */
+        function atualizarSelectExercicios() {
+            const isCali = document.getElementById('md-cat').value === 'calistenia';
+            const select = document.getElementById('md-ex');
+            select.innerHTML = (isCali ? baseEx.calistenia : getSaveAtivo().customAcademia).map(ex => `<option value="${ex}">${ex}</option>`).join('');
+            preencherPesoAuto();
+        }
+
+        function preencherPesoAuto() {
+            const inputPeso = document.getElementById('md-peso');
+            if(document.getElementById('md-cat').value === 'calistenia') { inputPeso.value = ''; inputPeso.disabled = true; return; }
+            inputPeso.disabled = false;
+            const ultimo = getSaveAtivo().treinos.find(t => t.exercicio === document.getElementById('md-ex').value && t.peso);
+            inputPeso.value = ultimo ? ultimo.peso : '';
+        }
+
+        function salvarTreinoModal() {
+            const reps = parseInt(document.getElementById('md-reps').value);
+            if(!reps || reps <= 0) return alert("Insira as repetições!");
+            
+            const novo = { 
+                id: Date.now(), categoria: document.getElementById('md-cat').value, exercicio: document.getElementById('md-ex').value, 
+                reps, peso: parseFloat(document.getElementById('md-peso').value) || null, dataIso: new Date().toISOString() 
+            };
+            
+            getSaveAtivo().treinos.unshift(novo);
+            salvarDados();
+            fecharModal('modal-add');
+            document.getElementById('md-reps').value = '';
+            atualizarTudo();
+            confetti({ particleCount: 50, spread: 60, colors: ['#00d2d3', '#feca57'] });
+            
+            // Inicia Cronômetro Flutuante
+            iniciarCronometro(90);
+        }
+
+        function addExercicioAcademia() {
+            const nome = prompt("Nome do exercício:");
+            if(nome && !getSaveAtivo().customAcademia.includes(nome)) {
+                getSaveAtivo().customAcademia.push(nome); salvarDados(); atualizarTudo();
+            }
+        }
+
+        function iniciarCronometro(segundos) {
+            clearInterval(timerInterval);
+            let tempo = segundos;
+            const timerEl = document.getElementById('rest-timer');
+            const textoEl = document.getElementById('timer-text');
+            timerEl.classList.add('active');
+
+            timerInterval = setInterval(() => {
+                tempo--;
+                let m = Math.floor(tempo / 60).toString().padStart(2, '0');
+                let s = (tempo % 60).toString().padStart(2, '0');
+                textoEl.innerText = `${m}:${s}`;
+                if (tempo <= 0) {
+                    clearInterval(timerInterval);
+                    textoEl.innerText = "TREINAR!";
+                    setTimeout(() => timerEl.classList.remove('active'), 3000);
+                }
+            }, 1000);
+        }
+
+        /* ======== HEATMAP ======== */
+        function renderizarHeatmap(treinos) {
+            const container = document.getElementById('heatmap');
+            container.innerHTML = '';
+            
+            const hoje = new Date();
+            hoje.setHours(0,0,0,0);
+            let volumes = {};
+            let maxVol = 1; 
+
+            for(let i=27; i>=0; i--) {
+                let d = new Date(hoje);
+                d.setDate(d.getDate() - i);
+                volumes[d.toDateString()] = 0;
+            }
+
+            treinos.forEach(t => {
+                let dStr = new Date(t.dataIso).toDateString();
+                if(volumes[dStr] !== undefined) {
+                    volumes[dStr] += t.reps;
+                    if(volumes[dStr] > maxVol) maxVol = volumes[dStr];
+                }
+            });
+
+            Object.keys(volumes).forEach(dStr => {
+                let vol = volumes[dStr];
+                let cssClass = '';
+                if(vol > 0) {
+                    let ratio = vol / maxVol;
+                    if(ratio > 0.6) cssClass = 'heat-level-3';
+                    else if(ratio > 0.2) cssClass = 'heat-level-2';
+                    else cssClass = 'heat-level-1';
+                }
+                
+                let formatData = new Date(dStr).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+                container.innerHTML += `<div class="heat-square ${cssClass}" title="${formatData}: ${vol} reps"></div>`;
+            });
+        }
+
+        /* ======== FLEX CARD ======== */
+        function prepararCartaoFlex() {
+            const save = getSaveAtivo();
+            const stats = processarRPG(save.treinos);
+            
+            let totalReps = save.treinos.reduce((acc, t) => acc + t.reps, 0);
+            let globalMaxPR = 0;
+            save.treinos.forEach(t => {
+                if(t.peso) globalMaxPR = Math.max(globalMaxPR, calcularPR(t.peso, t.reps));
+            });
+
+            document.getElementById('flex-lvl').innerText = `LVL ${stats.level}`;
+            document.getElementById('flex-reps').innerText = totalReps;
+            document.getElementById('flex-pr').innerText = globalMaxPR;
+        }
+
+        /* ======== GRAFICO FANTASMA ======== */
+        function renderizarGrafico() {
+            const ctx = document.getElementById('ghostChart');
+            if(!ctx) return;
+            if(ghostChart) ghostChart.destroy();
+
+            const treinos = getSaveAtivo().treinos;
+            const labels = [];
+            const dAtual = []; const dPass = [];
+
+            for(let i=6; i>=0; i--) {
+                let d1 = new Date(); d1.setDate(d1.getDate() - i);
+                let d2 = new Date(); d2.setDate(d2.getDate() - (i + 7));
+                labels.push(d1.toLocaleDateString('pt-BR', {weekday:'short'}));
+                
+                dAtual.push(treinos.filter(t => new Date(t.dataIso).toDateString() === d1.toDateString()).reduce((a,b)=>a+b.reps,0));
+                dPass.push(treinos.filter(t => new Date(t.dataIso).toDateString() === d2.toDateString()).reduce((a,b)=>a+b.reps,0));
+            }
+
+            const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+            ghostChart = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label:'Semana Atual', data: dAtual, borderColor: '#00d2d3', backgroundColor: '#00d2d340', fill: true, tension: 0.4 },
+                        { label:'Fantasma', data: dPass, borderColor: isDark?'rgba(255,255,255,0.2)':'rgba(0,0,0,0.2)', borderDash:[5,5], tension: 0.4 }
+                    ]
+                },
+                options: { scales: { x:{display:false}, y:{display:false} }, plugins: { legend: {display:false} } } 
+            });
+        }
+
+        /* ======== BACKUP E ROTINAS ======== */
+        function renderizarSaves() {
+            const div = document.getElementById('lista-saves');
+            div.innerHTML = Object.keys(appState.saves).sort((a,b) => new Date(appState.saves[b].dataInicio) - new Date(appState.saves[a].dataInicio)).map(id => {
+                const s = appState.saves[id];
+                const isActive = id === appState.activeSaveId;
+                return `
+                <div style="border: 1px solid ${isActive?'var(--accent)':'var(--glass-border)'}; padding: 15px; border-radius: 16px; margin-bottom: 10px; opacity: ${isActive?'1':'0.7'}; background: rgba(0,0,0,0.2)">
+                    <div style="font-weight:900; font-size:1.1rem; color:${isActive?'var(--accent)':'var(--text-main)'}">${s.nome}</div>
+                    <div style="font-size:0.8rem; color:var(--text-light); margin-top:5px;">${new Date(s.dataInicio).toLocaleDateString('pt-BR')} - ${s.treinos.length} Treinos</div>
+                    ${!isActive ? `<button onclick="carregarSave('${id}')" style="margin-top:10px; padding:8px; border-radius:8px; width:100%; border:none; cursor:pointer;">Ativar Rotina</button>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function arquivarRotina() {
+            const nome = prompt("Nome da NOVA Fase (ex: Foco Peito):");
+            if(!nome) return;
+            const novoId = 'save_' + Date.now();
+            appState.saves[novoId] = { nome, dataInicio: new Date().toISOString(), treinos: [], customAcademia: [...appState.saves[appState.activeSaveId].customAcademia] };
+            appState.activeSaveId = novoId;
+            salvarDados(); atualizarTudo(); switchTab('dash');
+        }
+
+        function carregarSave(id) {
+            if(confirm("Deseja ativar este save?")) { appState.activeSaveId = id; salvarDados(); atualizarTudo(); switchTab('dash'); }
+        }
+
+        function exportarDados() {
+            const dadosStr = JSON.stringify(appState);
+            navigator.clipboard.writeText(dadosStr).then(() => {
+                alert("✅ Save copiado! Cole no Bloco de Notas ou WhatsApp para guardar com segurança.");
+            }).catch(() => {
+                prompt("Copie o texto abaixo para salvar seu progresso:", dadosStr);
+            });
+        }
+
+        function importarDados() {
+            const input = prompt("Cole o texto do seu Save copiado anteriormente:");
+            if(!input) return;
+            try {
+                const validacao = JSON.parse(input);
+                if(validacao.saves && validacao.activeSaveId) {
+                    appState = validacao;
+                    salvarDados(); atualizarTudo();
+                    alert("✅ Progresso recuperado com sucesso!");
+                } else alert("❌ Código inválido!");
+            } catch(e) { alert("❌ Erro ao ler o código."); }
+        }
+    </script>
+</body>
+</html>
